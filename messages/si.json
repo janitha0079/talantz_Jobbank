@@ -1,0 +1,42 @@
+{
+  "nav": {
+    "home": "මුල් පිටුව",
+    "jobs": "රැකියා පිරිසෙන්",
+    "signIn": "ප්‍රවේශ වන්න",
+    "signOut": "ඉවත් වන්න",
+    "myProfile": "මගේ පැතිකඩ",
+    "myApplications": "මගේ අයදුම්පත්",
+    "dashboard": "පාලක පුවරුව"
+  },
+  "auth": {
+    "signIn": "ප්‍රවේශ වන්න",
+    "signUp": "ගිණුමක් සාදන්න",
+    "email": "විද්‍යුත් තැපෑල",
+    "password": "මුරපදය",
+    "firstName": "මුල් නම",
+    "lastName": "අවසාන නම",
+    "continueWithLinkedIn": "LinkedIn සමඟ ඉදිරියට යන්න",
+    "continueWithGoogle": "Google සමඟ ඉදිරියට යන්න",
+    "uploadCV": "CV උඩුගත කරන්න",
+    "alreadyHaveAccount": "දැනටමත් ගිණුමක් තිබේද?",
+    "noAccount": "ගිණුමක් නැද්ද?",
+    "verifyEmailNotice": "ගිණුම තහවුරු කිරීමට ඔබේ විද්‍යුත් තැපෑල පරීක්ෂා කරන්න."
+  },
+  "jobs": {
+    "searchPlaceholder": "රැකියා මාතෘකාව, කුසලතාව, හෝ මූල පදය",
+    "filters": "පෙරහන්",
+    "noResults": "ඔබේ සෙවීමට ගැලපෙන රැකියා නොමැත.",
+    "applyNow": "දැන් අයදුම් කරන්න",
+    "saveJob": "රැකියාව සුරකින්න"
+  },
+  "common": {
+    "loading": "පූරණය වෙමින්...",
+    "error": "යමක් වැරදී ගියා",
+    "save": "සුරකින්න",
+    "cancel": "අවලංගු කරන්න",
+    "back": "ආපසු",
+    "next": "ඊළඟ",
+    "finish": "අවසන් කරන්න",
+    "required": "අවශ්‍යයි"
+  }
+}

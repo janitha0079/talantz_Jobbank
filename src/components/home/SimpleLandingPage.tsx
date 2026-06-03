@@ -1,264 +1,428 @@
-import React from 'react'
+'use client'
+
+import { useEffect, useState } from 'react'
 import Link from 'next/link'
+import { SignOutButton } from '@/components/auth/SignOutButton'
 
 type Role = 'job_seeker' | 'employer_admin' | 'employer_member' | 'super_admin' | null
 
-const S = {
-  ff:    "'Outfit', system-ui, sans-serif",
-  serif: "'Cormorant Garamond', Georgia, serif",
-  royal: '#1B3DE0',
-  deep:  '#091875',
-  ink:   '#07080F',
-  soft:  '#2E3345',
-  muted: '#6B7280',
-  gold:  '#F5B800',
-  white: '#FFFFFF',
+function useReveal() {
+  useEffect(() => {
+    const els = document.querySelectorAll<Element>('.reveal:not(.in)')
+    const io = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((e) => {
+          if (e.isIntersecting) {
+            e.target.classList.add('in')
+            io.unobserve(e.target)
+          }
+        })
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -6% 0px' }
+    )
+    els.forEach((el) => io.observe(el))
+    return () => io.disconnect()
+  }, [])
 }
 
-const pill = (extra?: React.CSSProperties): React.CSSProperties => ({
-  display: 'inline-flex', alignItems: 'center', gap: 6,
-  padding: '6px 14px', borderRadius: 999, fontSize: 12,
-  fontWeight: 600, letterSpacing: '0.04em', ...extra,
-})
-
-const btn = (bg: string, color: string, extra?: React.CSSProperties): React.CSSProperties => ({
-  display: 'inline-block', padding: '12px 28px', borderRadius: 10,
-  background: bg, color, fontFamily: S.ff, fontSize: 14, fontWeight: 700,
-  textDecoration: 'none', whiteSpace: 'nowrap', cursor: 'pointer', ...extra,
-})
+function Mesh({ soft = false }: { soft?: boolean }) {
+  return (
+    <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+      <div style={{
+        position: 'absolute', top: '-40%', left: '-6%', width: 460, height: 460,
+        borderRadius: '50%',
+        background: 'radial-gradient(circle, rgba(79,110,255,.5), transparent 64%)',
+        filter: 'blur(30px)', animation: 'drift1 17s ease-in-out infinite',
+      }} />
+      <div style={{
+        position: 'absolute', bottom: '-30%', right: '-4%', width: 520, height: 520,
+        borderRadius: '50%',
+        background: `radial-gradient(circle, rgba(245,184,0,${soft ? .14 : .24}), transparent 62%)`,
+        filter: 'blur(34px)', animation: 'drift2 21s ease-in-out infinite',
+      }} />
+      <div style={{
+        position: 'absolute', inset: 0, opacity: .28,
+        backgroundImage: 'linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px)',
+        backgroundSize: '52px 52px',
+      }} />
+    </div>
+  )
+}
 
 export function SimpleLandingPage({ role = null }: { role?: Role }) {
+  useReveal()
+
   const isSeeker   = role === 'job_seeker'
   const isEmployer = role === 'employer_admin' || role === 'employer_member'
 
-  return (
-    <div style={{ fontFamily: S.ff, background: '#F8F9FF', color: S.ink, minHeight: '100vh' }}>
+  const defaultSide = isEmployer ? 'employer' : 'seeker'
+  const [side, setSide] = useState<'seeker' | 'employer'>(defaultSide)
 
-      {/* ── NAV ──────────────────────────────────────────────────────── */}
+  return (
+    <div style={{ minHeight: '100vh', background: 'var(--surface)', fontFamily: 'var(--ff)' }}>
+
+      {/* ── NAV ─────────────────────────────────────────────────────── */}
       <nav style={{
-        background: 'rgba(255,255,255,0.94)', backdropFilter: 'blur(16px)',
-        borderBottom: '1px solid rgba(27,61,224,0.08)',
-        padding: '0 2rem', position: 'sticky', top: 0, zIndex: 100,
+        position: 'sticky', top: 0, zIndex: 90,
+        background: 'rgba(6,11,46,.88)', backdropFilter: 'blur(18px) saturate(140%)',
+        borderBottom: '1px solid rgba(255,255,255,.09)',
       }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 68 }}>
-          <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 11, textDecoration: 'none' }}>
-            <div style={{
-              width: 38, height: 38, borderRadius: 11,
-              background: 'linear-gradient(135deg,#1B3DE0,#4F6EFF)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center',
-              color: S.white, fontWeight: 800, fontSize: 18,
-              boxShadow: '0 4px 14px rgba(27,61,224,0.35)',
-            }}>T</div>
-            <div>
-              <div style={{ fontWeight: 700, color: S.ink, fontSize: 15.5, lineHeight: 1.2 }}>TalentAI.lk</div>
-              <div style={{ fontSize: 11, color: S.muted }}>AI-first hiring · Sri Lanka</div>
-            </div>
+        <div className="wrap" style={{ height: 66, display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 20 }}>
+          <Link href="/" style={{ display: 'flex', alignItems: 'center', textDecoration: 'none' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/talantz-logo.png" alt="Talantz" style={{ height: 30, width: 'auto', display: 'block' }} />
           </Link>
-          <div style={{ display: 'flex', gap: 4, alignItems: 'center' }}>
-            <Link href="/jobs"                  style={{ padding: '7px 14px', borderRadius: 8, color: S.soft, fontSize: 13.5, fontWeight: 500, textDecoration: 'none' }}>Browse jobs</Link>
-            <Link href="/login?role=job_seeker" style={{ padding: '7px 14px', borderRadius: 8, color: S.soft, fontSize: 13.5, fontWeight: 500, textDecoration: 'none' }}>Job seeker login</Link>
-            <Link href="/login?role=employer"   style={{ padding: '7px 14px', borderRadius: 8, color: S.soft, fontSize: 13.5, fontWeight: 500, textDecoration: 'none' }}>Employer login</Link>
-            <Link href={isSeeker ? '/jobs' : isEmployer ? '/employer' : '/register?role=job_seeker'} style={{
-              ...btn('linear-gradient(135deg,#1B3DE0,#4F6EFF)', S.white),
-              padding: '8px 20px', fontSize: 13.5,
-              boxShadow: '0 2px 12px rgba(27,61,224,0.3)',
-            }}>
-              {isSeeker ? 'Browse jobs' : isEmployer ? 'Dashboard' : 'Get started'}
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            <Link href="/jobs" className="btn btn-sm" style={{ background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.85)', border: '1px solid rgba(255,255,255,.14)' }}>
+              Browse jobs
+            </Link>
+            {role ? (
+              <SignOutButton
+                label="Sign out"
+                callbackUrl="/"
+                className="btn btn-sm"
+                style={{ background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.85)', border: '1px solid rgba(255,255,255,.14)' }}
+              />
+            ) : (
+              <Link href="/login?audience=employer" className="btn btn-sm" style={{ background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.85)', border: '1px solid rgba(255,255,255,.14)' }}>
+                Sign in
+              </Link>
+            )}
+            <Link
+              href={isSeeker ? '/jobs' : isEmployer ? '/employer' : '/register?audience=job_seeker'}
+              className="btn btn-gold btn-sm"
+            >
+              {isSeeker ? 'Find jobs' : isEmployer ? 'Dashboard' : 'Get started'}
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* ── HERO ─────────────────────────────────────────────────────── */}
+      {/* ── HERO ────────────────────────────────────────────────────── */}
       <section style={{
-        background: 'linear-gradient(140deg,#06103f 0%,#0c1a6b 45%,#1535c0 100%)',
-        padding: '88px 2rem 128px', overflow: 'hidden', position: 'relative',
+        position: 'relative', overflow: 'hidden',
+        background: 'radial-gradient(120% 130% at 78% -10%, var(--space-2) 0%, var(--space-1) 46%, var(--space-0) 100%)',
+        color: '#fff', padding: '96px 0 140px',
       }}>
-        <div style={{ position: 'absolute', top: -120, left: -120, width: 500, height: 500, borderRadius: '50%', background: 'radial-gradient(circle,rgba(245,184,0,0.14),transparent 65%)', pointerEvents: 'none' }} />
-        <div style={{ position: 'absolute', bottom: -80, right: '5%', width: 600, height: 600, borderRadius: '50%', background: 'radial-gradient(circle,rgba(79,110,255,0.18),transparent 65%)', pointerEvents: 'none' }} />
+        <Mesh />
+        <div className="wrap" style={{ position: 'relative' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 460px', gap: 64, alignItems: 'center' }} className="hero-grid">
 
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'grid', gridTemplateColumns: '1fr 420px', gap: 64, alignItems: 'center', position: 'relative' }}>
-          {/* Left copy */}
-          <div>
-            <div style={pill({ background: 'rgba(245,184,0,0.15)', color: S.gold, border: '1px solid rgba(245,184,0,0.3)', marginBottom: 28 })}>
-              <span style={{ width: 6, height: 6, borderRadius: '50%', background: S.gold, display: 'inline-block' }} />
-              AI-powered hiring platform for Sri Lanka
-            </div>
-            <h1 style={{ fontFamily: S.serif, fontSize: 'clamp(3.2rem,5.5vw,5.8rem)', lineHeight: 1.05, color: S.white, marginBottom: 24, fontWeight: 600 }}>
-              Hire smarter.<br />
-              Apply faster.<br />
-              <span style={{ color: S.gold }}>Win together.</span>
-            </h1>
-            <p style={{ fontSize: 17, color: 'rgba(255,255,255,0.78)', maxWidth: '52ch', lineHeight: 1.7, marginBottom: 36 }}>
-              Sri Lanka&apos;s first AI-native job platform. Candidates build AI-scored profiles and apply with confidence. Employers manage the full hiring pipeline from one workspace.
-            </p>
-            <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 40 }}>
-              <Link href={isSeeker ? '/jobs' : '/register?role=job_seeker'} style={{ ...btn(S.gold, S.deep), boxShadow: '0 4px 20px rgba(245,184,0,0.4)', fontSize: 15 }}>
-                {isSeeker ? 'Browse open roles' : 'Find your next job'}
-              </Link>
-              <Link href={isEmployer ? '/employer' : '/register?role=employer&plan=monthly'} style={{ ...btn('rgba(255,255,255,0.12)', S.white), border: '1.5px solid rgba(255,255,255,0.22)', fontSize: 15 }}>
-                {isEmployer ? 'Open dashboard' : 'Post a job'}
-              </Link>
-            </div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: 20, color: 'rgba(255,255,255,0.6)', fontSize: 13 }}>
-              {['LinkedIn import', 'AI fit scoring', 'ATS pipeline', 'Free to apply'].map(t => (
-                <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
-                  <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                    <circle cx="7" cy="7" r="7" fill="rgba(245,184,0,0.2)" />
-                    <path d="M4 7l2 2 4-4" stroke={S.gold} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                  </svg>
-                  {t}
-                </span>
-              ))}
-            </div>
-          </div>
-
-          {/* Right — UI mockup */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-            {/* Job card */}
-            <div style={{ background: 'rgba(255,255,255,0.97)', borderRadius: 18, padding: '20px 22px', boxShadow: '0 24px 64px rgba(0,0,0,0.22)' }}>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: 14 }}>
-                <div>
-                  <div style={{ fontWeight: 700, color: S.ink, fontSize: 15, marginBottom: 3 }}>Senior Product Designer</div>
-                  <div style={{ fontSize: 13, color: S.muted }}>Dialog Axiata · Colombo</div>
-                </div>
-                <span style={pill({ background: '#EDFDF5', color: '#15803D', fontSize: 11 })}>Active</span>
-              </div>
-              <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 14 }}>
-                {['Figma', 'UX Research', 'Prototyping'].map(s => (
-                  <span key={s} style={pill({ background: '#EEF1FD', color: S.royal, fontSize: 11 })}>{s}</span>
-                ))}
-              </div>
-              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                <div style={{ fontSize: 13, color: S.muted }}>LKR 180k – 240k / month</div>
-                <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-                  <div style={{ fontSize: 12, color: S.royal, fontWeight: 600 }}>AI Match</div>
-                  <div style={{ width: 48, height: 6, background: '#EEF1FD', borderRadius: 999 }}>
-                    <div style={{ width: '78%', height: '100%', background: 'linear-gradient(90deg,#1B3DE0,#4F6EFF)', borderRadius: 999 }} />
-                  </div>
-                  <div style={{ fontSize: 12, fontWeight: 700, color: S.royal }}>78%</div>
+            {/* ── Left copy ── */}
+            <div>
+              {/* Segmented toggle */}
+              <div style={{ marginBottom: 20 }}>
+                <div className="seg" style={{ display: 'inline-flex' }}>
+                  <button
+                    className={side === 'seeker' ? 'on seeker' : ''}
+                    onClick={() => setSide('seeker')}
+                    style={{ padding: '11px 24px', fontSize: 14.5, fontWeight: 700 }}
+                  >
+                    Looking for work
+                  </button>
+                  <button
+                    className={side === 'employer' ? 'on employer' : ''}
+                    onClick={() => setSide('employer')}
+                    style={{ padding: '11px 24px', fontSize: 14.5, fontWeight: 700 }}
+                  >
+                    Hiring talent
+                  </button>
                 </div>
               </div>
-            </div>
 
-            {/* Pipeline widget */}
-            <div style={{ background: 'rgba(9,24,117,0.7)', border: '1px solid rgba(255,255,255,0.12)', borderRadius: 18, padding: '18px 22px', backdropFilter: 'blur(16px)' }}>
-              <div style={{ fontSize: 11, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'rgba(255,255,255,0.55)', marginBottom: 12, fontWeight: 600 }}>Hiring pipeline</div>
-              <div style={{ display: 'flex', gap: 6 }}>
-                {[{ label: 'Applied', n: 48, active: false }, { label: 'Shortlist', n: 12, active: true }, { label: 'Interview', n: 4, active: false }, { label: 'Offer', n: 1, active: false }].map(stage => (
-                  <div key={stage.label} style={{ flex: 1, padding: '10px 8px', borderRadius: 10, textAlign: 'center', background: stage.active ? S.gold : 'rgba(255,255,255,0.08)', border: stage.active ? 'none' : '1px solid rgba(255,255,255,0.1)' }}>
-                    <div style={{ fontSize: 17, fontWeight: 700, color: stage.active ? S.deep : S.white, lineHeight: 1 }}>{stage.n}</div>
-                    <div style={{ fontSize: 10, color: stage.active ? S.deep : 'rgba(255,255,255,0.6)', marginTop: 4 }}>{stage.label}</div>
-                  </div>
+              {/* Dynamic eyebrow tag */}
+              <div key={side + '-tag'} className="tag swap-in" style={{
+                display: 'inline-flex', background: 'rgba(10,8,3,.55)', color: 'var(--gold-soft)',
+                border: '1px solid rgba(245,184,0,.35)', marginBottom: 22,
+              }}>
+                <span style={{ width: 7, height: 7, borderRadius: '50%', background: 'var(--gold)', display: 'inline-block', flexShrink: 0 }} />
+                {side === 'seeker' ? 'For people looking for work' : 'For employers & recruiters'}
+              </div>
+
+              {/* Mixed-font headline */}
+              <h1 key={side + '-h1'} className="swap-in" style={{
+                fontFamily: 'var(--ff)', fontSize: 'clamp(3rem,5.2vw,5.4rem)',
+                lineHeight: 1.05, color: '#fff', marginBottom: 20, fontWeight: 800,
+                letterSpacing: '-0.02em',
+              }}>
+                {side === 'seeker' ? (
+                  <>
+                    Find work that{' '}
+                    <span style={{ fontFamily: 'var(--ff-serif)', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold-soft)', letterSpacing: 0 }}>fits</span>
+                    <br />— before you apply.
+                  </>
+                ) : (
+                  <>
+                    Hire the right{' '}
+                    <span style={{ fontFamily: 'var(--ff-serif)', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold-soft)', letterSpacing: 0 }}>person</span>
+                    <br />— faster than ever.
+                  </>
+                )}
+              </h1>
+
+              <p key={side + '-p'} className="swap-in" style={{ fontSize: 17, color: 'rgba(255,255,255,.72)', maxWidth: '48ch', lineHeight: 1.65, marginBottom: 32 }}>
+                {side === 'seeker'
+                  ? 'Build one AI-scored profile. See exactly how you match every role. Apply in seconds, track every step.'
+                  : 'Post a role in minutes, get AI-ranked applicants, and run your whole pipeline from one clean workspace.'}
+              </p>
+
+              <div key={side + '-btns'} className="swap-in" style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 28 }}>
+                {side === 'seeker' ? (
+                  <>
+                    <Link href={isSeeker ? '/profile' : '/register?audience=job_seeker'} className="btn btn-gold">
+                      Build your profile
+                    </Link>
+                    <Link href="/jobs" className="btn" style={{ background: 'rgba(255,255,255,.13)', color: '#fff', border: '1.5px solid rgba(255,255,255,.22)' }}>
+                      Browse open roles
+                    </Link>
+                  </>
+                ) : (
+                  <>
+                    <Link href={isEmployer ? '/employer/jobs/new' : '/register?audience=employer'} className="btn btn-gold">
+                      Post a job
+                    </Link>
+                    <Link href="#pricing" className="btn" style={{ background: 'rgba(255,255,255,.13)', color: '#fff', border: '1.5px solid rgba(255,255,255,.22)' }}>
+                      See pricing
+                    </Link>
+                  </>
+                )}
+              </div>
+
+              {/* Gold checkmarks */}
+              <div key={side + '-checks'} className="swap-in" style={{ display: 'flex', gap: 20, flexWrap: 'wrap' }}>
+                {(side === 'seeker'
+                  ? ['LinkedIn import', 'Instant fit score', 'Free forever']
+                  : ['AI applicant ranking', 'Full ATS pipeline', 'Team workspace']
+                ).map((t) => (
+                  <span key={t} style={{ display: 'flex', alignItems: 'center', gap: 7, fontSize: 13.5, color: 'rgba(255,255,255,.72)', fontWeight: 500 }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                      <circle cx="8" cy="8" r="8" fill="var(--gold)" opacity=".22" />
+                      <path d="M4.5 8l2.5 2.5 4.5-4.5" stroke="var(--gold)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {t}
+                  </span>
                 ))}
               </div>
             </div>
 
-            {/* Candidate row */}
-            <div style={{ background: 'rgba(255,255,255,0.97)', borderRadius: 18, padding: '16px 22px', boxShadow: '0 8px 32px rgba(0,0,0,0.14)', display: 'flex', alignItems: 'center', gap: 14 }}>
-              <div style={{ width: 44, height: 44, borderRadius: '50%', background: 'linear-gradient(135deg,#1B3DE0,#4F6EFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: S.white, fontWeight: 700, fontSize: 16, flexShrink: 0 }}>K</div>
-              <div style={{ flex: 1 }}>
-                <div style={{ fontWeight: 600, color: S.ink, fontSize: 14 }}>Kavindra Perera</div>
-                <div style={{ fontSize: 12, color: S.muted }}>UI/UX Designer · 3 yrs exp</div>
+            {/* ── Right cards — switch by side ── */}
+            {side === 'seeker' ? (
+              <div key="seeker-cards" className="swap-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                {/* Job card */}
+                <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,.22)' }}>
+                  {/* Card header */}
+                  <div style={{ padding: '20px 22px 16px' }}>
+                    <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 6 }}>
+                      <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 15.5 }}>Senior Product Designer</div>
+                      <span style={{ display: 'flex', alignItems: 'center', gap: 5, fontSize: 12, fontWeight: 700, color: '#15803D', flexShrink: 0, marginLeft: 8 }}>
+                        <span style={{ width: 6, height: 6, borderRadius: '50%', background: '#22C55E', display: 'inline-block' }} />
+                        Open
+                      </span>
+                    </div>
+                    <div style={{ fontSize: 13, color: 'var(--ink-muted)', marginBottom: 12 }}>Dialog Axiata · Colombo · Hybrid</div>
+                    <div style={{ display: 'flex', gap: 7, flexWrap: 'wrap' }}>
+                      {['Figma', 'UX Research', 'Prototyping'].map((s) => (
+                        <span key={s} style={{ padding: '4px 11px', borderRadius: 999, fontSize: 12, fontWeight: 600, background: 'var(--royal-pale)', color: 'var(--royal)' }}>{s}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Dark AI match band */}
+                  <div style={{ background: 'linear-gradient(135deg,#06103f,#0f1f7a)', padding: '16px 22px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 10 }}>
+                      <span style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', color: 'rgba(255,255,255,.55)', textTransform: 'uppercase' }}>Your AI Match</span>
+                      <span style={{ fontSize: 22, fontWeight: 800, color: 'var(--gold-soft)', letterSpacing: '-.02em' }}>92<span style={{ fontSize: 13 }}>%</span></span>
+                    </div>
+                    <div style={{ height: 8, borderRadius: 999, background: 'rgba(255,255,255,.12)', overflow: 'hidden', marginBottom: 10 }}>
+                      <div style={{ height: '100%', width: '92%', borderRadius: 999, background: 'linear-gradient(90deg,#F5B800,#FFD34D)', boxShadow: '0 0 12px rgba(245,184,0,.5)' }} />
+                    </div>
+                    <div style={{ fontSize: 12.5, color: 'rgba(255,255,255,.55)', lineHeight: 1.5 }}>
+                      Strong on design systems · add 1 research case study to reach 96%
+                    </div>
+                  </div>
+                </div>
+
+                {/* Profile strength card */}
+                <div style={{ background: '#fff', borderRadius: 16, padding: '16px 20px', display: 'flex', alignItems: 'center', gap: 14, boxShadow: '0 8px 28px rgba(0,0,0,.14)' }}>
+                  <div className="av" style={{ width: 40, height: 40, fontSize: 16, flexShrink: 0 }}>K</div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 14 }}>Profile strength</div>
+                    <div style={{ fontSize: 12.5, color: 'var(--ink-muted)' }}>3 quick wins to stand out</div>
+                  </div>
+                  <div style={{ fontSize: 22, fontWeight: 800, color: 'var(--royal)', letterSpacing: '-.02em' }}>91<span style={{ fontSize: 13 }}>%</span></div>
+                </div>
+
               </div>
-              <div style={{ textAlign: 'right' }}>
-                <div style={{ fontSize: 11, color: S.muted, marginBottom: 3 }}>Profile score</div>
-                <div style={{ fontWeight: 700, color: S.royal, fontSize: 16 }}>91%</div>
+            ) : (
+              <div key="employer-cards" className="swap-in" style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+
+                {/* Pipeline card */}
+                <div style={{ background: 'rgba(255,255,255,.07)', borderRadius: 20, border: '1px solid rgba(255,255,255,.12)', padding: '18px 20px', boxShadow: '0 8px 32px rgba(0,0,0,.2)' }}>
+                  <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', color: 'rgba(255,255,255,.45)', textTransform: 'uppercase', marginBottom: 14 }}>
+                    Hiring Pipeline · Product Designer
+                  </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 8 }}>
+                    {[
+                      { n: 48, label: 'Applied',    active: false },
+                      { n: 12, label: 'Shortlist',  active: true  },
+                      { n: 4,  label: 'Interview',  active: false },
+                      { n: 1,  label: 'Offer',      active: false },
+                    ].map((stage) => (
+                      <div key={stage.label} style={{
+                        padding: '12px 8px', borderRadius: 12, textAlign: 'center',
+                        background: stage.active ? 'var(--gold)' : 'rgba(255,255,255,.08)',
+                        border: `1px solid ${stage.active ? 'var(--gold)' : 'rgba(255,255,255,.1)'}`,
+                      }}>
+                        <div style={{ fontSize: 22, fontWeight: 800, color: stage.active ? 'var(--royal-deep)' : '#fff', lineHeight: 1 }}>{stage.n}</div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: stage.active ? 'var(--royal-deep)' : 'rgba(255,255,255,.5)', marginTop: 4 }}>{stage.label}</div>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Ranked applicants card */}
+                <div style={{ background: '#fff', borderRadius: 20, overflow: 'hidden', boxShadow: '0 20px 60px rgba(0,0,0,.22)' }}>
+                  <div style={{ padding: '14px 18px 10px', borderBottom: '1px solid rgba(27,61,224,.07)' }}>
+                    <div style={{ fontSize: 11, fontWeight: 800, letterSpacing: '.1em', color: 'var(--ink-muted)', textTransform: 'uppercase' }}>AI-Ranked Applicants</div>
+                  </div>
+                  {[
+                    { i: 'A', n: 'Amara Silva',   r: 'Sr. Designer · 6y',      s: 96, top: true },
+                    { i: 'N', n: 'Nuwan Jay',      r: 'Product Designer · 4y',  s: 88, top: false },
+                    { i: 'R', n: 'Rashmi Fer.',    r: 'UI Designer · 3y',       s: 81, top: false },
+                  ].map((cand) => (
+                    <div key={cand.n} style={{
+                      display: 'flex', alignItems: 'center', gap: 12, padding: '12px 18px',
+                      borderBottom: '1px solid rgba(27,61,224,.06)',
+                      ...(cand.top ? { background: 'rgba(245,184,0,.07)', borderLeft: '3px solid var(--gold)' } : { borderLeft: '3px solid transparent' }),
+                    }}>
+                      <div className="av" style={{ width: 36, height: 36, fontSize: 14 }}>{cand.i}</div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 13.5, lineHeight: 1.2 }}>{cand.n}</div>
+                        <div style={{ fontSize: 12, color: 'var(--ink-muted)' }}>{cand.r}</div>
+                      </div>
+                      <div style={{ fontSize: 15, fontWeight: 800, color: cand.top ? '#15803D' : 'var(--royal)', letterSpacing: '-.01em' }}>
+                        {cand.s} <span style={{ fontSize: 11, fontWeight: 600 }}>%</span>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+
               </div>
-            </div>
+            )}
+
           </div>
+        </div>
+
+        {/* Curved bottom divider */}
+        <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, height: 52, pointerEvents: 'none' }}>
+          <svg viewBox="0 0 1440 52" preserveAspectRatio="none" style={{ position: 'absolute', inset: 0, width: '100%', height: '100%', display: 'block' }}>
+            <path d="M0,52 L0,26 Q720,-18 1440,26 L1440,52 Z" fill="var(--surface)" />
+          </svg>
         </div>
       </section>
 
-      {/* ── STATS ────────────────────────────────────────────────────── */}
-      <div style={{ maxWidth: 1200, margin: '-40px auto 0', padding: '0 2rem', position: 'relative', zIndex: 20 }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }}>
+      {/* ── STATS BAR ───────────────────────────────────────────────── */}
+      <section style={{ maxWidth: 1200, margin: '-8px auto 0', padding: '0 28px', position: 'relative', zIndex: 10 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4,1fr)', gap: 14 }} className="stats-grid">
           {[
             { n: '2,400+', label: 'Active job seekers' },
             { n: '340+',   label: 'Employers hiring' },
             { n: '5,800+', label: 'Applications placed' },
             { n: '91%',    label: 'Employer satisfaction' },
-          ].map(s => (
-            <div key={s.label} style={{ background: S.white, borderRadius: 16, padding: '18px 22px', boxShadow: '0 12px 40px rgba(27,61,224,0.1)', border: '1.5px solid rgba(27,61,224,0.07)', textAlign: 'center' }}>
-              <div style={{ fontFamily: S.serif, fontSize: 28, fontWeight: 700, color: S.royal, lineHeight: 1 }}>{s.n}</div>
-              <div style={{ fontSize: 12.5, color: S.muted, marginTop: 6 }}>{s.label}</div>
+          ].map((s, i) => (
+            <div key={s.label} className="card reveal" data-d={String(i + 1)} style={{ padding: '20px 24px', textAlign: 'center', boxShadow: '0 8px 30px rgba(27,61,224,.07)' }}>
+              <div style={{ fontFamily: 'var(--ff-serif)', fontSize: 30, fontWeight: 700, color: 'var(--royal)', lineHeight: 1 }}>{s.n}</div>
+              <div style={{ fontSize: 12.5, color: 'var(--ink-muted)', marginTop: 6 }}>{s.label}</div>
             </div>
           ))}
         </div>
-      </div>
+      </section>
 
-      {/* ── HOW IT WORKS ─────────────────────────────────────────────── */}
-      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 2rem 48px' }}>
-        <div style={{ textAlign: 'center', marginBottom: 52 }}>
-          <div style={pill({ background: '#EEF1FD', color: S.royal, marginBottom: 16 })}>How it works</div>
-          <h2 style={{ fontFamily: S.serif, fontSize: 'clamp(2rem,3.5vw,3rem)', color: S.ink, marginBottom: 12 }}>Simple for everyone</h2>
-          <p style={{ color: S.muted, fontSize: 15, maxWidth: '50ch', margin: '0 auto' }}>Whether searching for a role or building a team, TalentAI.lk gets you there faster.</p>
+      {/* ── HOW IT WORKS ────────────────────────────────────────────── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '88px 28px 64px' }}>
+        <div className="reveal" style={{ textAlign: 'center', marginBottom: 52 }}>
+          <div className="badge badge-royal" style={{ display: 'inline-flex', marginBottom: 14 }}>How it works</div>
+          <h2 style={{ fontFamily: 'var(--ff-serif)', fontSize: 'clamp(2.2rem,3.5vw,3.2rem)', color: 'var(--ink)', marginBottom: 12, fontWeight: 600 }}>
+            Simple for everyone
+          </h2>
+          <p style={{ color: 'var(--ink-muted)', fontSize: 15, maxWidth: '50ch', margin: '0 auto' }}>
+            Whether you&apos;re searching for a role or building a team, Talantz gets you there faster.
+          </p>
         </div>
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 24 }} className="steps-grid">
+
           {/* Seekers */}
-          <div style={{ background: S.white, borderRadius: 20, border: '1.5px solid rgba(27,61,224,0.09)', padding: 36 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'linear-gradient(135deg,#1B3DE0,#4F6EFF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" /></svg>
+          <div className="card step-card reveal" style={{ padding: 36, transition: 'transform .28s cubic-bezier(.22,.68,0,1), box-shadow .28s, border-color .28s' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 11, background: 'linear-gradient(135deg,var(--royal),#4F6EFF)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <circle cx="12" cy="8" r="4" /><path d="M4 20c0-4 3.6-7 8-7s8 3 8 7" />
+                </svg>
               </div>
-              <div style={{ fontWeight: 700, color: S.ink, fontSize: 16 }}>For job seekers</div>
+              <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 16 }}>For job seekers</div>
             </div>
             {[
               { n: '01', title: 'Build your profile',  body: 'Import from LinkedIn or fill manually. AI strengthens your headline, skills, and summary.' },
               { n: '02', title: 'See your fit score',   body: 'Before applying, see how well you match each role based on your profile and experience.' },
               { n: '03', title: 'Apply and track',      body: 'Apply in seconds and track every application from shortlist to offer in one dashboard.' },
-            ].map(step => (
-              <div key={step.n} style={{ display: 'flex', gap: 16, marginBottom: 22 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: '#EEF1FD', color: S.royal, fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{step.n}</div>
+            ].map((step) => (
+              <div key={step.n} style={{ display: 'flex', gap: 14, marginBottom: 20 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'var(--royal-pale)', color: 'var(--royal)', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{step.n}</div>
                 <div>
-                  <div style={{ fontWeight: 600, color: S.ink, fontSize: 14, marginBottom: 4 }}>{step.title}</div>
-                  <div style={{ fontSize: 13.5, color: S.muted, lineHeight: 1.6 }}>{step.body}</div>
+                  <div style={{ fontWeight: 600, color: 'var(--ink)', fontSize: 14, marginBottom: 4 }}>{step.title}</div>
+                  <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.6 }}>{step.body}</div>
                 </div>
               </div>
             ))}
             <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-              <Link href="/register?role=job_seeker" style={btn('linear-gradient(135deg,#1B3DE0,#4F6EFF)', S.white, { fontSize: 13.5 })}>Create free account</Link>
-              <Link href="/login?role=job_seeker"    style={btn('transparent', S.soft, { fontSize: 13.5, border: '1.5px solid rgba(27,61,224,0.2)' })}>Sign in</Link>
+              <Link href="/register?audience=job_seeker" className="btn btn-royal btn-sm">Create free account</Link>
+              <Link href="/login?audience=job_seeker" className="btn btn-ghost btn-sm">Sign in</Link>
             </div>
           </div>
 
           {/* Employers */}
-          <div style={{ background: 'linear-gradient(160deg,#06103f,#0f1f7a)', borderRadius: 20, border: '1px solid rgba(255,255,255,0.08)', padding: 36 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 28 }}>
-              <div style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(245,184,0,0.2)', border: '1px solid rgba(245,184,0,0.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke={S.gold} strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2" /></svg>
+          <div className="step-card reveal" style={{ background: 'linear-gradient(160deg,#06103f,#0f1f7a)', borderRadius: 20, border: '1px solid rgba(255,255,255,.08)', padding: 36, transition: 'transform .28s cubic-bezier(.22,.68,0,1), box-shadow .28s' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 28 }}>
+              <div style={{ width: 38, height: 38, borderRadius: 11, background: 'rgba(245,184,0,.2)', border: '1px solid rgba(245,184,0,.3)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="var(--gold-soft)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <rect x="2" y="7" width="20" height="14" rx="2" /><path d="M16 7V5a2 2 0 0 0-4 0v2M8 7V5a2 2 0 0 0-4 0v2" />
+                </svg>
               </div>
-              <div style={{ fontWeight: 700, color: S.white, fontSize: 16 }}>For employers</div>
+              <div style={{ fontWeight: 700, color: '#fff', fontSize: 16 }}>For employers</div>
             </div>
             {[
               { n: '01', title: 'Post your role',              body: 'Create a job posting manually or let AI draft and improve your description in seconds.' },
               { n: '02', title: 'Review AI-ranked applicants', body: 'Applicants are scored and ranked by profile strength, skills, and fit signals automatically.' },
               { n: '03', title: 'Manage the pipeline',         body: 'Move candidates from screening to shortlist, interview, and hire — all from one dashboard.' },
-            ].map(step => (
-              <div key={step.n} style={{ display: 'flex', gap: 16, marginBottom: 22 }}>
-                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(245,184,0,0.15)', color: S.gold, fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{step.n}</div>
+            ].map((step) => (
+              <div key={step.n} style={{ display: 'flex', gap: 14, marginBottom: 20 }}>
+                <div style={{ width: 32, height: 32, borderRadius: 9, background: 'rgba(245,184,0,.15)', color: 'var(--gold-soft)', fontWeight: 800, fontSize: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>{step.n}</div>
                 <div>
-                  <div style={{ fontWeight: 600, color: S.white, fontSize: 14, marginBottom: 4 }}>{step.title}</div>
-                  <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,0.65)', lineHeight: 1.6 }}>{step.body}</div>
+                  <div style={{ fontWeight: 600, color: '#fff', fontSize: 14, marginBottom: 4 }}>{step.title}</div>
+                  <div style={{ fontSize: 13.5, color: 'rgba(255,255,255,.65)', lineHeight: 1.6 }}>{step.body}</div>
                 </div>
               </div>
             ))}
             <div style={{ display: 'flex', gap: 10, marginTop: 8 }}>
-              <Link href="/register?role=employer&plan=single" style={btn(S.gold, S.deep, { fontSize: 13.5 })}>Post a job</Link>
-              <Link href="/login?role=employer"                style={btn('rgba(255,255,255,0.1)', S.white, { fontSize: 13.5, border: '1px solid rgba(255,255,255,0.2)' })}>Employer login</Link>
+              <Link href="/register?audience=employer" className="btn btn-gold btn-sm">Post a job</Link>
+              <Link href="/login?audience=employer" className="btn btn-sm" style={{ background: 'rgba(255,255,255,.1)', color: '#fff', border: '1px solid rgba(255,255,255,.2)' }}>Employer login</Link>
             </div>
           </div>
+
         </div>
       </section>
 
-      {/* ── FEATURES ─────────────────────────────────────────────────── */}
-      <section style={{ background: S.white, padding: '64px 2rem' }}>
+      {/* ── FEATURES ────────────────────────────────────────────────── */}
+      <section style={{ background: '#fff', padding: '72px 28px 80px' }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 48 }}>
-            <div style={pill({ background: '#EEF1FD', color: S.royal, marginBottom: 16 })}>Platform highlights</div>
-            <h2 style={{ fontFamily: S.serif, fontSize: 'clamp(1.8rem,3vw,2.8rem)', color: S.ink }}>Everything you need in one place</h2>
+          <div className="reveal" style={{ textAlign: 'center', marginBottom: 48 }}>
+            <div className="badge badge-royal" style={{ display: 'inline-flex', marginBottom: 14 }}>Platform highlights</div>
+            <h2 style={{ fontFamily: 'var(--ff-serif)', fontSize: 'clamp(2rem,3vw,2.8rem)', color: 'var(--ink)', fontWeight: 600 }}>
+              Everything you need in one place
+            </h2>
           </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }} className="steps-grid">
             {[
               { icon: '🤖', title: 'AI-powered ranking',      body: 'Every applicant is automatically scored against role requirements so strong candidates surface faster.' },
               { icon: '📋', title: 'Full ATS pipeline',       body: 'Move candidates across Screening, Shortlist, Interview, Offer, and Hired — all in one workspace.' },
@@ -266,104 +430,130 @@ export function SimpleLandingPage({ role = null }: { role?: Role }) {
               { icon: '📊', title: 'Applicant analytics',     body: 'See drop-off rates, time-in-stage, and hire velocity from the employer dashboard.' },
               { icon: '✅', title: 'Verified certifications', body: 'Candidates attach verified credentials employers can see directly inside applicant cards.' },
               { icon: '🌏', title: 'Built for Sri Lanka',     body: 'Local currency, local companies, and a platform designed around how hiring actually works here.' },
-            ].map(f => (
-              <div key={f.title} style={{ padding: '24px 26px', borderRadius: 16, background: '#F8F9FF', border: '1.5px solid rgba(27,61,224,0.07)' }}>
-                <div style={{ fontSize: 28, marginBottom: 12 }}>{f.icon}</div>
-                <div style={{ fontWeight: 700, color: S.ink, fontSize: 15, marginBottom: 8 }}>{f.title}</div>
-                <div style={{ fontSize: 13.5, color: S.muted, lineHeight: 1.65 }}>{f.body}</div>
+            ].map((f, i) => (
+              <div key={f.title} className="card card-hover reveal" data-d={String((i % 3) + 1)} style={{ padding: '26px 28px' }}>
+                <div style={{ fontSize: 28, marginBottom: 14 }}>{f.icon}</div>
+                <div style={{ fontWeight: 700, color: 'var(--ink)', fontSize: 15, marginBottom: 8 }}>{f.title}</div>
+                <div style={{ fontSize: 13.5, color: 'var(--ink-muted)', lineHeight: 1.65 }}>{f.body}</div>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── PRICING ──────────────────────────────────────────────────── */}
-      <section style={{ padding: '72px 2rem 80px', background: '#F0F3FF' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
-          <div style={{ textAlign: 'center', marginBottom: 52 }}>
-            <div style={pill({ background: '#EEF1FD', color: S.royal, marginBottom: 16 })}>Employer pricing</div>
-            <h2 style={{ fontFamily: S.serif, fontSize: 'clamp(1.8rem,3vw,2.8rem)', color: S.ink, marginBottom: 12 }}>Simple, transparent packages</h2>
-            <p style={{ color: S.muted, fontSize: 15, maxWidth: '54ch', margin: '0 auto' }}>Competitive with local recruiter rates — with a cleaner, AI-first experience included.</p>
-          </div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20, alignItems: 'start' }}>
-            {([
-              { tag: 'One-off',      name: 'Launch 1 Job',     price: 'LKR 3,500',  per: 'per campaign',     featured: false, cta: 'Get started',        href: '/register?role=employer&plan=single',  tagBg: '#EEF1FD',             tagColor: S.royal,   cardBg: S.white, priceColor: S.ink,  checkFill: '#EEF1FD',             checkStroke: S.royal,   bodyColor: S.soft, points: ['One active job posting', 'AI job description builder', 'Applicant dashboard access', 'Standard screening tools'] },
-              { tag: 'Most popular', name: 'Monthly Hiring',   price: 'LKR 7,500',  per: 'per month',        featured: true,  cta: 'Start monthly plan', href: '/register?role=employer&plan=monthly', tagBg: 'rgba(9,24,117,0.12)', tagColor: S.deep,    cardBg: S.gold,  priceColor: S.deep, checkFill: 'rgba(9,24,117,0.15)', checkStroke: S.deep,    bodyColor: S.deep, points: ['Unlimited job postings', 'Full ATS pipeline access', 'AI applicant ranking', 'Team collaboration tools'] },
-              { tag: 'Enterprise',   name: 'Bulk Recruitment', price: 'LKR 13,500', per: 'starting package', featured: false, cta: 'Contact us',         href: '/register?role=employer&plan=bulk',    tagBg: '#EDFDF5',             tagColor: '#15803D', cardBg: S.white, priceColor: S.ink,  checkFill: '#EDFDF5',             checkStroke: '#15803D', bodyColor: S.soft, points: ['Multi-branch job campaigns', 'Recruiter team accounts', 'Bulk posting & management', 'Priority onboarding support'] },
-            ] as const).map(pkg => (
-              <div key={pkg.name} style={{
-                background: pkg.cardBg, borderRadius: 22, padding: 32,
-                border: pkg.featured ? `2px solid ${S.gold}` : '1.5px solid rgba(27,61,224,0.09)',
-                boxShadow: pkg.featured ? '0 24px 64px rgba(245,184,0,0.2)' : '0 4px 20px rgba(27,61,224,0.06)',
-                transform: pkg.featured ? 'scale(1.03)' : 'none',
-                position: 'relative',
-              }}>
-                <span style={pill({ background: pkg.tagBg, color: pkg.tagColor, marginBottom: 20, fontSize: 11 })}>{pkg.tag}</span>
-                <div style={{ fontFamily: S.serif, fontSize: 34, fontWeight: 700, color: pkg.priceColor, lineHeight: 1, marginBottom: 4 }}>{pkg.price}</div>
-                <div style={{ fontSize: 13, color: pkg.featured ? 'rgba(9,24,117,0.6)' : S.muted, marginBottom: 8 }}>{pkg.per}</div>
-                <div style={{ fontWeight: 700, color: pkg.priceColor, fontSize: 16, marginBottom: 22 }}>{pkg.name}</div>
-                <div style={{ display: 'grid', gap: 10, marginBottom: 26 }}>
-                  {pkg.points.map((p: string) => (
-                    <div key={p} style={{ display: 'flex', gap: 10, alignItems: 'flex-start' }}>
-                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 2 }}>
-                        <circle cx="8" cy="8" r="8" fill={pkg.checkFill} />
-                        <path d="M5 8l2 2 4-4" stroke={pkg.checkStroke} strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <span style={{ fontSize: 13.5, color: pkg.bodyColor, lineHeight: 1.5 }}>{p}</span>
-                    </div>
-                  ))}
-                </div>
-                <Link href={pkg.href} style={{
-                  ...btn(pkg.featured ? S.deep : 'linear-gradient(135deg,#1B3DE0,#4F6EFF)', S.white),
-                  display: 'block', textAlign: 'center', fontSize: 14,
+      {/* ── PRICING ─────────────────────────────────────────────────── */}
+      <section style={{ maxWidth: 1200, margin: '0 auto', padding: '88px 28px 72px' }}>
+        <div className="reveal" style={{ textAlign: 'center', marginBottom: 52 }}>
+          <div className="badge badge-gold" style={{ display: 'inline-flex', marginBottom: 14 }}>Employer pricing</div>
+          <h2 style={{ fontFamily: 'var(--ff-serif)', fontSize: 'clamp(2rem,3vw,2.8rem)', color: 'var(--ink)', fontWeight: 600, marginBottom: 12 }}>
+            Simple packages for Sri Lankan hiring teams
+          </h2>
+          <p style={{ color: 'var(--ink-muted)', fontSize: 15, maxWidth: '52ch', margin: '0 auto' }}>
+            Start with one role, upgrade to monthly hiring, or use a bulk plan for volume campaigns.
+          </p>
+        </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: 20 }} className="price-grid">
+          {[
+            {
+              name: 'Launch 1 Job', price: 'LKR 3,500', cadence: 'per campaign',
+              href: '/register?audience=employer&plan=single', featured: false,
+              points: ['Best for one immediate opening', 'AI-assisted job description builder', 'Application dashboard and shortlist basics'],
+            },
+            {
+              name: 'Monthly Hiring', price: 'LKR 7,500', cadence: 'per month',
+              href: '/register?audience=employer&plan=monthly', featured: true,
+              points: ['Ideal for active recruiting teams', 'Multiple live jobs in one workspace', 'ATS views, candidate tracking, and richer analytics'],
+            },
+            {
+              name: 'Bulk Recruitment', price: 'LKR 13,500', cadence: 'starting package',
+              href: '/register?audience=employer&plan=bulk', featured: false,
+              points: ['For branch hiring and volume recruitment', 'Bulk posting support and recruiter collaboration', 'Priority onboarding for ATS workflow setup'],
+            },
+          ].map((pkg, i) => (
+            <div
+              key={pkg.name}
+              className="card price-card card-hover reveal"
+              data-d={String(i + 1)}
+              style={{
+                padding: 32, position: 'relative',
+                ...(pkg.featured ? { border: '2px solid var(--gold)', boxShadow: '0 20px 60px rgba(245,184,0,.18)' } : {}),
+              }}
+            >
+              {pkg.featured && (
+                <div style={{
+                  position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
+                  background: 'var(--gold)', color: 'var(--royal-deep)', fontSize: 12,
+                  fontWeight: 700, padding: '4px 18px', borderRadius: 999, whiteSpace: 'nowrap',
                 }}>
-                  {pkg.cta}
-                </Link>
+                  Most popular
+                </div>
+              )}
+              <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: pkg.featured ? '#9A7200' : 'var(--royal)', marginBottom: 8, fontWeight: 700 }}>
+                {pkg.name}
               </div>
-            ))}
-          </div>
+              <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 20 }}>
+                <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--ink)', fontFamily: 'var(--ff)' }}>{pkg.price}</div>
+                <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{pkg.cadence}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+                {pkg.points.map((p) => (
+                  <div key={p} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
+                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                      <circle cx="8" cy="8" r="8" fill="var(--royal)" opacity=".12" />
+                      <path d="M5 8l2 2 4-4" stroke="var(--royal)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                    </svg>
+                    {p}
+                  </div>
+                ))}
+              </div>
+              <Link href={pkg.href} className={pkg.featured ? 'btn btn-gold' : 'btn btn-royal'} style={{ width: '100%', justifyContent: 'center' }}>
+                {pkg.featured ? 'Start hiring' : 'Choose package'}
+              </Link>
+            </div>
+          ))}
         </div>
       </section>
 
-      {/* ── FOOTER CTA ───────────────────────────────────────────────── */}
-      <section style={{ background: 'linear-gradient(140deg,#06103f 0%,#0c1a6b 50%,#1535c0 100%)', padding: '80px 2rem', textAlign: 'center', position: 'relative', overflow: 'hidden' }}>
-        <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', width: 700, height: 700, borderRadius: '50%', background: 'radial-gradient(circle,rgba(79,110,255,0.15),transparent 65%)', pointerEvents: 'none' }} />
-        <div style={{ maxWidth: 640, margin: '0 auto', position: 'relative' }}>
-          <div style={pill({ background: 'rgba(245,184,0,0.15)', color: S.gold, border: '1px solid rgba(245,184,0,0.25)', marginBottom: 24 })}>
+      {/* ── FOOTER CTA ──────────────────────────────────────────────── */}
+      <section style={{
+        position: 'relative', overflow: 'hidden',
+        background: 'radial-gradient(120% 130% at 78% -10%, var(--space-2) 0%, var(--space-1) 46%, var(--space-0) 100%)',
+        padding: '100px 28px 112px', color: '#fff',
+      }}>
+        <Mesh soft />
+        <div className="wrap" style={{ position: 'relative', maxWidth: 640, margin: '0 auto', textAlign: 'center' }}>
+          <div className="tag reveal in" style={{ display: 'inline-flex', background: 'rgba(245,184,0,.13)', color: 'var(--gold-soft)', border: '1px solid rgba(245,184,0,.3)', marginBottom: 24 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', animation: 'pulse 2s infinite', display: 'inline-block' }} />
             Ready to get started?
           </div>
-          <h2 style={{ fontFamily: S.serif, fontSize: 'clamp(2.2rem,4vw,3.8rem)', color: S.white, marginBottom: 16, lineHeight: 1.1 }}>
+          <h2 className="reveal" data-d="1" style={{ fontFamily: 'var(--ff-serif)', fontSize: 'clamp(2.4rem,4vw,4rem)', color: '#fff', marginBottom: 16, lineHeight: 1.08, fontWeight: 600 }}>
             The future of hiring<br />starts here.
           </h2>
-          <p style={{ color: 'rgba(255,255,255,0.7)', fontSize: 16, marginBottom: 40, lineHeight: 1.65 }}>
-            Join thousands of candidates and employers already using TalentAI.lk — the smarter way to hire and get hired in Sri Lanka.
+          <p className="reveal" data-d="2" style={{ color: 'rgba(255,255,255,.7)', fontSize: 16, marginBottom: 40, lineHeight: 1.7 }}>
+            Join thousands of candidates and employers already using Talantz — the smarter way to hire and get hired in Sri Lanka.
           </p>
-          <div style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
-            <Link href="/register?role=job_seeker" style={{ ...btn(S.gold, S.deep), boxShadow: '0 4px 20px rgba(245,184,0,0.35)', fontSize: 15 }}>Create candidate account</Link>
-            <Link href="/register?role=employer"   style={{ ...btn('rgba(255,255,255,0.1)', S.white), border: '1.5px solid rgba(255,255,255,0.22)', fontSize: 15 }}>Post a job today</Link>
+          <div className="reveal" data-d="3" style={{ display: 'flex', gap: 14, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/register?audience=job_seeker" className="btn btn-gold">Create candidate account</Link>
+            <Link href="/register?audience=employer" className="btn btn-glass">Post a job today</Link>
           </div>
-          <div style={{ marginTop: 40, color: 'rgba(255,255,255,0.4)', fontSize: 13 }}>
+          <div className="reveal" data-d="4" style={{ marginTop: 36, color: 'rgba(255,255,255,.38)', fontSize: 13 }}>
             Free for job seekers &nbsp;·&nbsp; No credit card required &nbsp;·&nbsp; Set up in minutes
           </div>
         </div>
       </section>
 
-      {/* ── FOOTER ───────────────────────────────────────────────────── */}
-      <footer style={{ background: '#040d32', padding: '28px 2rem' }}>
-        <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 16 }}>
+      {/* ── FOOTER ──────────────────────────────────────────────────── */}
+      <footer style={{ background: 'var(--space-0)', padding: '26px 28px', borderTop: '1px solid rgba(255,255,255,.07)' }}>
+        <div className="wrap" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexWrap: 'wrap', gap: 14 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <div style={{ width: 30, height: 30, borderRadius: 8, background: 'linear-gradient(135deg,#1B3DE0,#4F6EFF)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: S.white, fontWeight: 800, fontSize: 14 }}>T</div>
-            <span style={{ color: 'rgba(255,255,255,0.5)', fontSize: 13 }}>TalentAI.lk — AI-first hiring for Sri Lanka</span>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/talantz-mark.png" alt="Talantz" style={{ width: 26, height: 26, display: 'block' }} />
+            <span style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>Talantz — AI-first hiring for Sri Lanka</span>
           </div>
-          <div style={{ display: 'flex', gap: 24 }}>
-            {[
-              { href: '/jobs',                   label: 'Browse jobs' },
-              { href: '/login?role=job_seeker',  label: 'Job seekers' },
-              { href: '/login?role=employer',    label: 'Employers' },
-              { href: '/register?role=employer', label: 'Post a job' },
-            ].map(l => (
-              <Link key={l.href} href={l.href} style={{ color: 'rgba(255,255,255,0.4)', fontSize: 13, textDecoration: 'none' }}>{l.label}</Link>
-            ))}
+          <div style={{ display: 'flex', gap: 22 }}>
+            <Link href="/jobs" className="footlink" style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>Browse jobs</Link>
+            <Link href="/register?audience=job_seeker" className="footlink" style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>For candidates</Link>
+            <Link href="/register?audience=employer" className="footlink" style={{ color: 'rgba(255,255,255,.5)', fontSize: 13 }}>For employers</Link>
           </div>
         </div>
       </footer>

@@ -13,94 +13,52 @@ interface CompanyBilling {
   subscriptionExpiresAt?: string | null
 }
 
-// ── Plan definitions ─────────────────────────────────────────────────────────
+// ── Plan definitions (matches home-page pricing) ─────────────────────────────
 
-interface PlanFeature {
-  label: string
-  included: boolean
-  note?: string
-}
-
-interface Plan {
-  id: 'free' | 'growth' | 'enterprise'
+interface Package {
   name: string
-  tagline: string
-  price: { monthly: number | null; annual: number | null }
-  color: string
-  bg: string
-  border: string
-  cta: string
-  ctaTier?: 'growth' | 'enterprise'
-  features: PlanFeature[]
+  price: string
+  cadence: string
+  featured: boolean
+  ctaTier: 'growth' | 'enterprise' | null
+  points: string[]
 }
 
-const PLANS: Plan[] = [
+const PACKAGES: Package[] = [
   {
-    id: 'free',
-    name: 'Free',
-    tagline: 'Get started at no cost',
-    price: { monthly: 0, annual: 0 },
-    color: 'var(--ink)',
-    bg: 'var(--surface)',
-    border: 'var(--border)',
-    cta: 'Current plan',
-    features: [
-      { label: '3 active job posts', included: true },
-      { label: 'Basic applicant list', included: true },
-      { label: 'Manual status updates', included: true },
-      { label: 'AI match scoring', included: false },
-      { label: 'AI strengths & gaps analysis', included: false },
-      { label: 'Certificate verification', included: false },
-      { label: 'Shortlist comparison', included: false },
-      { label: 'Candidate detail pages', included: false },
-      { label: 'Interview prep generation', included: false },
-      { label: 'Priority support', included: false },
-    ],
-  },
-  {
-    id: 'growth',
-    name: 'Growth',
-    tagline: 'For growing teams hiring actively',
-    price: { monthly: 4900, annual: 3900 },
-    color: 'var(--royal)',
-    bg: 'var(--royal-pale)',
-    border: 'var(--royal)',
-    cta: 'Upgrade to Growth',
+    name: 'Launch 1 Job',
+    price: 'LKR 3,500',
+    cadence: 'per campaign',
+    featured: false,
     ctaTier: 'growth',
-    features: [
-      { label: '20 active job posts', included: true },
-      { label: 'AI match scoring for all applicants', included: true },
-      { label: 'AI strengths & gaps analysis', included: true },
-      { label: 'Certificate verification badges', included: true },
-      { label: 'Shortlist comparison (up to 3)', included: true },
-      { label: 'Full candidate detail pages', included: true },
-      { label: 'Timeline & activity history', included: true },
-      { label: 'Hiring view presets', included: true },
-      { label: 'Interview prep generation', included: false },
-      { label: 'Priority support', included: false },
+    points: [
+      'Best for one immediate opening',
+      'AI-assisted job description builder',
+      'Application dashboard and shortlist basics',
     ],
   },
   {
-    id: 'enterprise',
-    name: 'Enterprise',
-    tagline: 'For high-volume hiring at scale',
-    price: { monthly: 14900, annual: 11900 },
-    color: '#7c3aed',
-    bg: '#f3e8ff',
-    border: '#7c3aed',
-    cta: 'Upgrade to Enterprise',
+    name: 'Monthly Hiring',
+    price: 'LKR 7,500',
+    cadence: 'per month',
+    featured: true,
+    ctaTier: 'growth',
+    points: [
+      'Ideal for active recruiting teams',
+      'Multiple live jobs in one workspace',
+      'ATS views, candidate tracking, and richer analytics',
+    ],
+  },
+  {
+    name: 'Bulk Recruitment',
+    price: 'LKR 13,500',
+    cadence: 'starting package',
+    featured: false,
     ctaTier: 'enterprise',
-    features: [
-      { label: 'Unlimited job posts', included: true },
-      { label: 'AI match scoring for all applicants', included: true },
-      { label: 'AI strengths & gaps analysis', included: true },
-      { label: 'Certificate verification badges', included: true },
-      { label: 'Shortlist comparison (up to 3)', included: true },
-      { label: 'Full candidate detail pages', included: true },
-      { label: 'Timeline & activity history', included: true },
-      { label: 'Hiring view presets', included: true },
-      { label: 'AI interview prep generation', included: true },
-      { label: 'Priority support & onboarding', included: true },
+    points: [
+      'For branch hiring and volume recruitment',
+      'Bulk posting support and recruiter collaboration',
+      'Priority onboarding for ATS workflow setup',
     ],
   },
 ]
@@ -130,7 +88,6 @@ export default function BillingPage() {
   const [company, setCompany] = useState<CompanyBilling | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
-  const [billingPeriod, setBillingPeriod] = useState<'monthly' | 'annual'>('monthly')
   const [checkoutLoading, setCheckoutLoading] = useState<string | null>(null)
 
   useEffect(() => {
@@ -150,7 +107,7 @@ export default function BillingPage() {
       const res = await fetch('/api/payments/checkout', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ tier, billingPeriod }),
+        body: JSON.stringify({ tier, billingPeriod: 'monthly' }),
       })
       const data = await res.json()
       if (res.ok && data.url) {
@@ -233,138 +190,65 @@ export default function BillingPage() {
           </div>
         )}
 
-        {/* Billing period toggle */}
-        <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '28px' }}>
-          <div style={{ display: 'inline-flex', borderRadius: '999px', background: 'var(--surface)', border: '1.5px solid var(--border)', padding: '3px', gap: '3px' }}>
-            {(['monthly', 'annual'] as const).map(period => (
-              <button
-                key={period}
-                onClick={() => setBillingPeriod(period)}
-                style={{
-                  padding: '7px 22px', borderRadius: '999px', border: 'none', cursor: 'pointer',
-                  fontSize: '0.85rem', fontWeight: 600,
-                  background: billingPeriod === period ? 'var(--royal)' : 'transparent',
-                  color: billingPeriod === period ? '#fff' : 'var(--ink-muted)',
-                  transition: 'all 0.15s',
-                }}
-              >
-                {period === 'monthly' ? 'Monthly' : 'Annual'}
-                {period === 'annual' && (
-                  <span style={{ marginLeft: '6px', fontSize: '0.72rem', opacity: billingPeriod === 'annual' ? 0.85 : 0.6 }}>
-                    Save ~20%
-                  </span>
-                )}
-              </button>
-            ))}
-          </div>
-        </div>
-
-        {/* Plan cards */}
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '20px', marginBottom: '40px' }}>
-          {PLANS.map(plan => {
-            const isCurrentPlan = plan.id === currentTier
-            const isDowngrade = ['growth', 'enterprise'].indexOf(plan.id) < ['growth', 'enterprise'].indexOf(currentTier as 'growth' | 'enterprise')
-            const priceVal = billingPeriod === 'monthly' ? plan.price.monthly : plan.price.annual
-            const isCheckingOut = checkoutLoading === plan.ctaTier
+        {/* Package cards — same format as home page */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3,1fr)', gap: '20px', marginBottom: '40px' }} className="price-grid">
+          {PACKAGES.map((pkg, i) => {
+            const isCheckingOut = checkoutLoading === pkg.ctaTier
 
             return (
               <div
-                key={plan.id}
-                className="card"
+                key={pkg.name}
+                className="card price-card card-hover"
                 style={{
-                  borderRadius: '24px', padding: '28px',
-                  border: isCurrentPlan ? `2px solid ${plan.color}` : `1px solid ${plan.id === 'growth' ? plan.border : 'var(--border)'}`,
-                  background: isCurrentPlan ? plan.bg : '#fff',
-                  position: 'relative',
-                  transform: plan.id === 'growth' ? 'translateY(-6px)' : 'none',
-                  boxShadow: plan.id === 'growth' ? '0 12px 40px rgba(27,61,224,0.15)' : undefined,
+                  padding: 32, position: 'relative',
+                  ...(pkg.featured
+                    ? { border: '2px solid var(--gold)', boxShadow: '0 20px 60px rgba(245,184,0,.18)' }
+                    : {}),
                 }}
               >
-                {plan.id === 'growth' && !isCurrentPlan && (
+                {pkg.featured && (
                   <div style={{
-                    position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)',
-                    background: 'var(--royal)', color: '#fff', fontSize: '0.72rem', fontWeight: 700,
-                    padding: '3px 14px', borderRadius: '999px', whiteSpace: 'nowrap', letterSpacing: '0.04em',
+                    position: 'absolute', top: -14, left: '50%', transform: 'translateX(-50%)',
+                    background: 'var(--gold)', color: 'var(--royal-deep)', fontSize: 12,
+                    fontWeight: 700, padding: '4px 18px', borderRadius: 999, whiteSpace: 'nowrap',
                   }}>
-                    MOST POPULAR
+                    Most popular
                   </div>
                 )}
 
-                {isCurrentPlan && (
-                  <div style={{
-                    position: 'absolute', top: '-12px', left: '50%', transform: 'translateX(-50%)',
-                    background: plan.color, color: plan.id === 'free' ? 'var(--ink)' : '#fff', fontSize: '0.72rem', fontWeight: 700,
-                    padding: '3px 14px', borderRadius: '999px', whiteSpace: 'nowrap', letterSpacing: '0.04em',
-                  }}>
-                    YOUR PLAN
-                  </div>
-                )}
-
-                {/* Plan header */}
-                <div style={{ marginBottom: '20px' }}>
-                  <h2 style={{ fontSize: '1.25rem', fontWeight: 800, color: plan.color, margin: '0 0 4px' }}>{plan.name}</h2>
-                  <p style={{ fontSize: '0.83rem', color: 'var(--ink-muted)', margin: '0 0 16px' }}>{plan.tagline}</p>
-
-                  {priceVal === 0 ? (
-                    <p style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--ink)', margin: 0 }}>Free</p>
-                  ) : (
-                    <div>
-                      <span style={{ fontSize: '2rem', fontWeight: 800, color: 'var(--ink)' }}>
-                        LKR {(priceVal! / 100).toLocaleString()}
-                      </span>
-                      <span style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginLeft: '4px' }}>
-                        /{billingPeriod === 'monthly' ? 'mo' : 'mo, billed annually'}
-                      </span>
-                    </div>
-                  )}
+                {/* Name */}
+                <div style={{ fontSize: 12, textTransform: 'uppercase', letterSpacing: '.08em', color: pkg.featured ? '#9A7200' : 'var(--royal)', marginBottom: 8, fontWeight: 700 }}>
+                  {pkg.name}
                 </div>
 
-                {/* CTA button */}
-                {isCurrentPlan ? (
-                  <button
-                    className="btn"
-                    disabled
-                    style={{ width: '100%', marginBottom: '20px', background: plan.bg, color: plan.color, border: `1.5px solid ${plan.color}`, opacity: 0.8, cursor: 'default' }}
-                  >
-                    Current plan
-                  </button>
-                ) : plan.id === 'free' ? (
-                  <button
-                    className="btn btn-ghost"
-                    disabled
-                    style={{ width: '100%', marginBottom: '20px', opacity: 0.5, cursor: 'not-allowed' }}
-                  >
-                    Downgrade
-                  </button>
-                ) : (
-                  <button
-                    className="btn btn-primary"
-                    style={{
-                      width: '100%', marginBottom: '20px',
-                      background: plan.id === 'enterprise' ? '#7c3aed' : 'var(--royal)',
-                      opacity: isCheckingOut ? 0.7 : 1,
-                    }}
-                    onClick={() => plan.ctaTier && handleCheckout(plan.ctaTier)}
-                    disabled={isCheckingOut || !!checkoutLoading}
-                  >
-                    {isCheckingOut ? 'Redirecting to checkout…' : plan.cta}
-                  </button>
-                )}
+                {/* Price */}
+                <div style={{ display: 'flex', alignItems: 'baseline', gap: 6, marginBottom: 20 }}>
+                  <div style={{ fontSize: 28, fontWeight: 800, color: 'var(--ink)', fontFamily: 'var(--ff)' }}>{pkg.price}</div>
+                  <div style={{ fontSize: 13, color: 'var(--ink-muted)' }}>{pkg.cadence}</div>
+                </div>
 
-                {/* Features */}
-                <ul style={{ margin: 0, padding: 0, listStyle: 'none', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                  {plan.features.map(feature => (
-                    <li key={feature.label} style={{ display: 'flex', gap: '10px', alignItems: 'flex-start' }}>
-                      <span style={{ fontSize: '0.85rem', color: feature.included ? '#16a34a' : 'var(--ink-muted)', flexShrink: 0, marginTop: '1px' }}>
-                        {feature.included ? '✓' : '✕'}
-                      </span>
-                      <span style={{ fontSize: '0.84rem', color: feature.included ? 'var(--ink)' : 'var(--ink-muted)' }}>
-                        {feature.label}
-                        {feature.note && <span style={{ fontSize: '0.75rem', color: 'var(--ink-muted)', marginLeft: '4px' }}>({feature.note})</span>}
-                      </span>
-                    </li>
+                {/* Bullet points */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 10, marginBottom: 24 }}>
+                  {pkg.points.map(p => (
+                    <div key={p} style={{ display: 'flex', gap: 9, alignItems: 'flex-start', fontSize: 13.5, color: 'var(--ink-soft)', lineHeight: 1.5 }}>
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0, marginTop: 1 }}>
+                        <circle cx="8" cy="8" r="8" fill="var(--royal)" opacity=".12" />
+                        <path d="M5 8l2 2 4-4" stroke="var(--royal)" strokeWidth="1.7" strokeLinecap="round" strokeLinejoin="round" />
+                      </svg>
+                      {p}
+                    </div>
                   ))}
-                </ul>
+                </div>
+
+                {/* CTA */}
+                <button
+                  className={pkg.featured ? 'btn btn-gold' : 'btn btn-royal'}
+                  style={{ width: '100%', justifyContent: 'center', opacity: isCheckingOut ? 0.7 : 1 }}
+                  onClick={() => pkg.ctaTier && handleCheckout(pkg.ctaTier)}
+                  disabled={isCheckingOut || !!checkoutLoading}
+                >
+                  {isCheckingOut ? 'Redirecting…' : pkg.featured ? 'Start hiring' : 'Choose package'}
+                </button>
               </div>
             )
           })}

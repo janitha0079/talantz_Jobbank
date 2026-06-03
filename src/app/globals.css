@@ -655,6 +655,70 @@ select.search-field {
   color: #B4790B;
 }
 
+/* ── Site nav pill hover states ─────────────────────────────────── */
+.nav-pill:hover {
+  color: #fff !important;
+  background: rgba(255, 255, 255, .1) !important;
+  border-color: rgba(255, 255, 255, .18) !important;
+  text-decoration: none !important;
+}
+
+.nav-cta:hover {
+  transform: translateY(-1px);
+  box-shadow: 0 8px 26px rgba(245, 184, 0, .5) !important;
+  text-decoration: none !important;
+}
+
+/* ── Eyebrow pill tag ───────────────────────────────────────────── */
+.tag {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 7px 15px;
+  border-radius: 999px;
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: .04em;
+}
+
+/* ── Segmented control (seeker / employer toggle) ───────────────── */
+.seg {
+  display: inline-flex;
+  gap: 3px;
+  padding: 4px;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, .08);
+  border: 1px solid rgba(255, 255, 255, .16);
+}
+
+.seg button {
+  padding: 7px 16px;
+  border-radius: 999px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: rgba(255, 255, 255, .65);
+  transition: all .2s;
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-family: var(--ff);
+}
+
+.seg button.on {
+  color: #fff;
+}
+
+.seg button.on.seeker {
+  background: linear-gradient(135deg, #1B3DE0, #4F6EFF);
+  box-shadow: 0 3px 12px rgba(27, 61, 224, .5);
+}
+
+.seg button.on.employer {
+  background: var(--gold);
+  color: var(--royal-deep);
+  box-shadow: 0 3px 12px rgba(245, 184, 0, .5);
+}
+
 /* Responsive collapse for two-column detail layouts */
 @media (max-width: 940px) {
   .detail-grid {

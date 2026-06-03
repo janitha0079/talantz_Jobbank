@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+
+# TypeScript build cache
+tsconfig.tsbuildinfo
+
+# Next.js build output
+.next/
+out/
+
+# Environment files — NEVER commit these
+.env
+.env.local
+.env.*.local
+.env.production
+
+# Prisma
+prisma/migrations/
+
+# Logs
+*.log
+npm-debug.log*
+dev-output.txt
+dev-server-live.log
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+.idea/
+
+# Misc scripts (not for production)
+check_users.mjs
+test-login.mjs
+test-login-v2.mjs
+run-dev.bat
+start-dev.js
+SETUP.md

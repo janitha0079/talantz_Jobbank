@@ -1,0 +1,84 @@
+{
+  "nav": {
+    "home": "Home",
+    "jobs": "Browse Jobs",
+    "signIn": "Sign in",
+    "signOut": "Sign out",
+    "myProfile": "My Profile",
+    "myApplications": "My Applications",
+    "dashboard": "Dashboard"
+  },
+  "auth": {
+    "signIn": "Sign in",
+    "signUp": "Create account",
+    "email": "Email address",
+    "password": "Password",
+    "firstName": "First name",
+    "lastName": "Last name",
+    "continueWithLinkedIn": "Continue with LinkedIn",
+    "continueWithGoogle": "Continue with Google",
+    "uploadCV": "Upload CV instead",
+    "alreadyHaveAccount": "Already have an account?",
+    "noAccount": "Don't have an account?",
+    "forgotPassword": "Forgot password?",
+    "verifyEmailNotice": "Check your email to verify your account."
+  },
+  "jobs": {
+    "searchPlaceholder": "Job title, skill, or keyword",
+    "filters": "Filters",
+    "sortNewest": "Newest first",
+    "sortSalary": "Highest salary",
+    "noResults": "No jobs match your search.",
+    "applyNow": "Apply now",
+    "saveJob": "Save job",
+    "aiMatch": "AI match",
+    "postedAgo": "Posted {days} days ago",
+    "closesIn": "Closes in {days} days"
+  },
+  "profile": {
+    "headline": "Profile Builder",
+    "score": "Profile score",
+    "completeYourProfile": "Complete your profile to improve your match score",
+    "aiSuggestions": "AI suggestions",
+    "addExperience": "Add experience",
+    "addEducation": "Add education",
+    "addSkill": "Add skill",
+    "uploadCV": "Upload CV"
+  },
+  "applications": {
+    "title": "My Applications",
+    "empty": "You haven't applied to any jobs yet.",
+    "browseJobs": "Browse jobs",
+    "status": {
+      "applied": "Applied",
+      "screening": "AI Screening",
+      "shortlisted": "Shortlisted",
+      "interview": "Interview",
+      "offer": "Offer",
+      "hired": "Hired",
+      "rejected": "Not selected",
+      "withdrawn": "Withdrawn"
+    }
+  },
+  "employer": {
+    "dashboard": "Employer Dashboard",
+    "postJob": "Post a job",
+    "candidates": "Candidates",
+    "pipeline": "Pipeline",
+    "aiScreening": "AI Screening"
+  },
+  "common": {
+    "loading": "Loading...",
+    "error": "Something went wrong",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "view": "View",
+    "submit": "Submit",
+    "back": "Back",
+    "next": "Next",
+    "finish": "Finish",
+    "required": "Required"
+  }
+}

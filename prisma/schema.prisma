@@ -1,0 +1,644 @@
+// =============================================================================
+// TalentAI.lk — Prisma Schema
+// Section 13.3, Step 1: Complete database schema
+// Stack: PostgreSQL via Supabase · pgvector for embeddings · Prisma ORM
+// =============================================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  previewFeatures = ["postgresqlExtensions"]
+}
+
+datasource db {
+  provider   = "postgresql"
+  extensions = [pgvector(map: "vector"), uuidOssp(map: "uuid-ossp")]
+  // url / directUrl moved to prisma.config.ts (required for Prisma 7+)
+}
+
+// =============================================================================
+// ENUMS
+// Per spec §11.3: use String fields over native PG enums where extensibility
+// matters. Native enums used only for stable, closed sets.
+// =============================================================================
+
+enum UserRole {
+  super_admin
+  employer_admin
+  employer_member
+  job_seeker
+}
+
+enum OAuthProvider {
+  linkedin
+  google
+  email
+}
+
+enum Availability {
+  immediately
+  one_month
+  three_months
+  not_looking
+}
+
+enum CompanySize {
+  size_1_10     @map("1-10")
+  size_11_50    @map("11-50")
+  size_51_200   @map("51-200")
+  size_201_500  @map("201-500")
+  size_500_plus @map("500+")
+}
+
+enum SubscriptionTier {
+  free
+  growth
+  enterprise
+}
+
+enum CompanyMemberRole {
+  admin
+  member
+}
+
+enum JobType {
+  full_time
+  part_time
+  contract
+  internship
+  freelance
+}
+
+enum WorkMode {
+  onsite
+  remote
+  hybrid
+}
+
+enum JobStatus {
+  draft
+  active
+  paused
+  closed
+  expired
+}
+
+enum ApplicationStatus {
+  applied
+  screening
+  shortlisted
+  interview
+  assessment
+  offer
+  hired
+  rejected
+  withdrawn
+}
+
+enum AiRecommendation {
+  shortlist
+  review
+  pass
+}
+
+enum InvitationRole {
+  admin
+  member
+}
+
+enum SubscriptionStatus {
+  free
+  trial
+  active
+  past_due
+  cancelled
+  expired
+}
+
+// =============================================================================
+// MODULE 1 — AUTHENTICATION & IDENTITY
+// =============================================================================
+
+model User {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  email         String    @unique
+  emailVerified Boolean   @default(false) @map("email_verified")
+  role          UserRole
+  passwordHash  String?   @map("password_hash") // bcrypt, cost 12; null for OAuth-only
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt     DateTime? @map("deleted_at") @db.Timestamptz // soft delete
+
+  // Relations
+  oauthAccounts    OAuthAccount[]
+  seekerProfile    SeekerProfile?
+  companyMemberships CompanyMember[]
+  companiesCreated Company[]      @relation("CompanyCreatedBy")
+  invitationsSent  Invitation[]   @relation("InvitationSentBy")
+  companyInvitesSent CompanyMember[] @relation("InvitedBy")
+  jobsPosted       Job[]
+  notifications    Notification[]
+  auditLogs        AuditLog[]
+
+  @@map("users")
+}
+
+model OAuthAccount {
+  id           String        @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId       String        @map("user_id") @db.Uuid
+  provider     OAuthProvider
+  providerId   String        @map("provider_id") // provider's user ID
+  accessToken  String?       @map("access_token")  // AES-256 encrypted
+  refreshToken String?       @map("refresh_token") // AES-256 encrypted
+  rawProfile   Json?         @map("raw_profile") // full provider profile snapshot
+  createdAt    DateTime      @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt    DateTime      @updatedAt @map("updated_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerId])
+  @@map("oauth_accounts")
+}
+
+// =============================================================================
+// MODULE 2 — JOB SEEKER PROFILE
+// =============================================================================
+
+model SeekerProfile {
+  id               String       @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId           String       @unique @map("user_id") @db.Uuid
+  fullName         String?      @map("full_name")
+  headline         String?      // "Senior Software Engineer at..."
+  summary          String?      // professional summary
+  location         String?
+  phone            String?
+  avatarUrl        String?      @map("avatar_url")
+  cvUrl            String?      @map("cv_url") // stored CV file (Supabase Storage, private bucket)
+  linkedinUrl      String?      @map("linkedin_url")
+  availability     Availability?
+  preferredSalary  Json?        @map("preferred_salary") // {min, max, currency, period}
+  preferredTypes   String[]     @map("preferred_types")  // [full_time, part_time, contract, remote]
+  skills           String[]
+  languages        Json[]       // [{language, proficiency}]
+  aiProfileScore   Int?         @map("ai_profile_score") // 0-100 completeness
+  isPublic         Boolean      @default(true) @map("is_public")
+  createdAt        DateTime     @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt        DateTime     @updatedAt @map("updated_at") @db.Timestamptz
+
+  user         User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  experiences  SeekerExperience[]
+  educations   SeekerEducation[]
+  certifications SeekerCertification[]
+  portfolioLinks SeekerPortfolioLink[]
+  applications Application[]
+  savedJobs    SavedJob[]
+  jobAlerts    JobAlert[]
+
+  @@map("seeker_profiles")
+}
+
+model SeekerExperience {
+  id          String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  profileId   String    @map("profile_id") @db.Uuid
+  title       String
+  company     String
+  location    String?
+  startDate   DateTime? @map("start_date") @db.Date
+  endDate     DateTime? @map("end_date") @db.Date // NULL = current
+  isCurrent   Boolean   @default(false) @map("is_current")
+  description String?
+  sortOrder   Int       @default(0) @map("sort_order")
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile SeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("seeker_experience")
+}
+
+model SeekerEducation {
+  id          String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  profileId   String   @map("profile_id") @db.Uuid
+  institution String
+  degree      String?
+  field       String?
+  startYear   Int?     @map("start_year")
+  endYear     Int?     @map("end_year")
+  grade       String?
+  description String?
+  createdAt   DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt   DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile SeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("seeker_education")
+}
+
+model SeekerCertification {
+  id            String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  profileId     String    @map("profile_id") @db.Uuid
+  name          String
+  issuer        String?
+  issuedDate    DateTime? @map("issued_date") @db.Date
+  expiryDate    DateTime? @map("expiry_date") @db.Date
+  credentialUrl String?   @map("credential_url")
+  createdAt     DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  profile SeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("seeker_certifications")
+}
+
+model SeekerPortfolioLink {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  profileId String   @map("profile_id") @db.Uuid
+  label     String?  // "GitHub", "Portfolio", etc.
+  url       String
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  profile SeekerProfile @relation(fields: [profileId], references: [id], onDelete: Cascade)
+
+  @@map("seeker_portfolio_links")
+}
+
+// =============================================================================
+// MODULE 4 — EMPLOYER / COMPANY
+// =============================================================================
+
+model Company {
+  id                    String           @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  name                  String
+  slug                  String           @unique // for URLs
+  description           String?
+  industry              String?
+  companySize           CompanySize?     @map("company_size")
+  foundedYear           Int?             @map("founded_year")
+  website               String?
+  logoUrl               String?          @map("logo_url")
+  coverUrl              String?          @map("cover_url")
+  headquarters          String?
+  linkedinUrl           String?          @map("linkedin_url")
+  facebookUrl           String?          @map("facebook_url")
+  supportEmail          String?          @map("support_email")
+  supportPhone          String?          @map("support_phone")
+  isVerified            Boolean          @default(false) @map("is_verified")
+  subscriptionTier      SubscriptionTier @default(free) @map("subscription_tier")
+  subscriptionStatus    SubscriptionStatus @default(free) @map("subscription_status")
+  subscriptionExpiresAt DateTime?        @map("subscription_expires_at") @db.Timestamptz
+  createdBy             String           @map("created_by") @db.Uuid // super admin who created
+  onboardedAt           DateTime?        @map("onboarded_at") @db.Timestamptz
+  suspendedAt           DateTime?        @map("suspended_at") @db.Timestamptz
+  createdAt             DateTime         @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime         @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt             DateTime?        @map("deleted_at") @db.Timestamptz
+
+  creator     User            @relation("CompanyCreatedBy", fields: [createdBy], references: [id])
+  members     CompanyMember[]
+  jobs        Job[]
+  invitations Invitation[]
+  locations   CompanyLocation[]
+  subscriptionHistory SubscriptionEvent[]
+  featuredListingPurchases FeaturedListingPurchase[]
+
+  @@map("companies")
+}
+
+model CompanyLocation {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  companyId String   @map("company_id") @db.Uuid
+  address   String
+  city      String?
+  country   String?
+  isPrimary Boolean  @default(false) @map("is_primary")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+
+  @@map("company_locations")
+}
+
+model CompanyMember {
+  id         String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  companyId  String            @map("company_id") @db.Uuid
+  userId     String            @map("user_id") @db.Uuid
+  role       CompanyMemberRole
+  invitedBy  String?           @map("invited_by") @db.Uuid
+  acceptedAt DateTime?         @map("accepted_at") @db.Timestamptz
+  createdAt  DateTime          @default(now()) @map("created_at") @db.Timestamptz
+
+  company  Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  user     User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  inviter  User?   @relation("InvitedBy", fields: [invitedBy], references: [id])
+
+  @@unique([companyId, userId])
+  @@map("company_members")
+}
+
+// =============================================================================
+// MODULE 3 — JOB LISTINGS
+// =============================================================================
+
+model Job {
+  id                String    @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  companyId         String    @map("company_id") @db.Uuid
+  postedBy          String    @map("posted_by") @db.Uuid
+  title             String
+  slug              String    @unique
+  description       String    // full JD, HTML/Markdown
+  requirements      String[]
+  responsibilities  String[]
+  skillsRequired    String[]  @map("skills_required")
+  skillsPreferred   String[]  @map("skills_preferred")
+  jobType           JobType   @map("job_type")
+  workMode          WorkMode  @map("work_mode")
+  location          String?
+  salaryMin         Int?      @map("salary_min")
+  salaryMax         Int?      @map("salary_max")
+  salaryCurrency    String    @default("LKR") @map("salary_currency")
+  salaryVisible     Boolean   @default(false) @map("salary_visible")
+  experienceMin     Int?      @map("experience_min") // years
+  experienceMax     Int?      @map("experience_max")
+  educationLevel    String?   @map("education_level")
+  status            JobStatus @default(draft)
+  isFeatured        Boolean   @default(false) @map("is_featured")
+  featuredUntil     DateTime? @map("featured_until") @db.Timestamptz
+  closesAt          DateTime? @map("closes_at") @db.Date
+  viewsCount        Int       @default(0) @map("views_count")
+  applicationsCount Int       @default(0) @map("applications_count")
+  aiGeneratedJd     Boolean   @default(false) @map("ai_generated_jd")
+  // pgvector embedding — stored as Unsupported until Prisma native vector ships
+  // Run: ALTER TABLE jobs ADD COLUMN embedding vector(1536);
+  // and manage via raw SQL in migrations.
+  createdAt         DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+  deletedAt         DateTime? @map("deleted_at") @db.Timestamptz
+
+  company      Company       @relation(fields: [companyId], references: [id])
+  poster       User          @relation(fields: [postedBy], references: [id])
+  applications Application[]
+  savedBy      SavedJob[]
+  alerts       JobAlert[]
+  featuredPurchases FeaturedListingPurchase[]
+
+  @@index([status, deletedAt])
+  @@index([companyId])
+  @@map("jobs")
+}
+
+// =============================================================================
+// MODULE 5 — APPLICATIONS & ATS
+// =============================================================================
+
+model Application {
+  id                String            @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  jobId             String            @map("job_id") @db.Uuid
+  seekerId          String            @map("seeker_id") @db.Uuid
+  coverLetter       String?           @map("cover_letter")
+  cvSnapshotUrl     String?           @map("cv_snapshot_url") // CV at time of application
+  status            ApplicationStatus @default(applied)
+  aiMatchScore      Int?              @map("ai_match_score")  // 0-100
+  aiSummary         String?           @map("ai_summary")      // AI-generated fit summary
+  aiStrengths       String[]          @map("ai_strengths")
+  aiGaps            String[]          @map("ai_gaps")
+  aiRecommendation  AiRecommendation? @map("ai_recommendation")
+  employerNotes     String?           @map("employer_notes")
+  rejectionReason   String?           @map("rejection_reason") // internal only
+  stageChangedAt    DateTime?         @map("stage_changed_at") @db.Timestamptz
+  screeningCompletedAt DateTime?      @map("screening_completed_at") @db.Timestamptz
+  createdAt         DateTime          @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime          @updatedAt @map("updated_at") @db.Timestamptz
+
+  job    Job           @relation(fields: [jobId], references: [id])
+  seeker SeekerProfile @relation(fields: [seekerId], references: [id])
+  notes  ApplicationNote[]
+  timeline ApplicationTimelineEvent[]
+
+  @@unique([jobId, seekerId])
+  @@index([seekerId])
+  @@index([status])
+  @@map("applications")
+}
+
+model ApplicationNote {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  applicationId String   @map("application_id") @db.Uuid
+  authorId      String   @map("author_id") @db.Uuid
+  body          String
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@map("application_notes")
+}
+
+model ApplicationTimelineEvent {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  applicationId String   @map("application_id") @db.Uuid
+  actorId       String?  @map("actor_id") @db.Uuid // null = system / AI
+  eventType     String   @map("event_type") // e.g. status_changed, note_added, ai_screened
+  payload       Json?    // arbitrary event data
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+  @@map("application_timeline_events")
+}
+
+// =============================================================================
+// SAVED JOBS & JOB ALERTS
+// =============================================================================
+
+model SavedJob {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  seekerId  String   @map("seeker_id") @db.Uuid
+  jobId     String   @map("job_id") @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  seeker SeekerProfile @relation(fields: [seekerId], references: [id], onDelete: Cascade)
+  job    Job           @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([seekerId, jobId])
+  @@map("saved_jobs")
+}
+
+model JobAlert {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  seekerId     String   @map("seeker_id") @db.Uuid
+  jobId        String?  @map("job_id") @db.Uuid // null = saved search alert
+  searchCriteria Json?  @map("search_criteria") // {keywords, location, jobType, ...}
+  isActive     Boolean  @default(true) @map("is_active")
+  lastTriggered DateTime? @map("last_triggered") @db.Timestamptz
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  seeker SeekerProfile @relation(fields: [seekerId], references: [id], onDelete: Cascade)
+  job    Job?          @relation(fields: [jobId], references: [id], onDelete: SetNull)
+
+  @@map("job_alerts")
+}
+
+// =============================================================================
+// INVITATIONS (Employer account creation flow)
+// =============================================================================
+
+model Invitation {
+  id          String         @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  companyId   String         @map("company_id") @db.Uuid
+  email       String
+  role        InvitationRole
+  token       String         @unique // secure random token
+  sentBy      String         @map("sent_by") @db.Uuid // super admin
+  acceptedAt  DateTime?      @map("accepted_at") @db.Timestamptz
+  expiresAt   DateTime       @map("expires_at") @db.Timestamptz // 7 days from send
+  createdAt   DateTime       @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id], onDelete: Cascade)
+  sender  User    @relation("InvitationSentBy", fields: [sentBy], references: [id])
+
+  @@index([token])
+  @@map("invitations")
+}
+
+// =============================================================================
+// MODULE 7 — NOTIFICATIONS
+// =============================================================================
+
+model Notification {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String   @map("user_id") @db.Uuid
+  type      String   // e.g. application_received, status_changed, new_match
+  title     String
+  body      String
+  actionUrl String?  @map("action_url")
+  isRead    Boolean  @default(false) @map("is_read")
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId, isRead])
+  @@map("notifications")
+}
+
+model NotificationPreference {
+  id        String  @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId    String  @map("user_id") @db.Uuid
+  type      String  // matches Notification.type
+  emailEnabled Boolean @default(true) @map("email_enabled")
+  inAppEnabled Boolean @default(true) @map("in_app_enabled")
+
+  @@unique([userId, type])
+  @@map("notification_preferences")
+}
+
+// =============================================================================
+// MODULE 8 — PAYMENTS & SUBSCRIPTIONS
+// =============================================================================
+
+model SubscriptionEvent {
+  id            String             @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  companyId     String             @map("company_id") @db.Uuid
+  fromTier      SubscriptionTier?  @map("from_tier")
+  toTier        SubscriptionTier   @map("to_tier")
+  fromStatus    SubscriptionStatus? @map("from_status")
+  toStatus      SubscriptionStatus @map("to_status")
+  stripeEventId String?            @map("stripe_event_id")
+  payhereRef    String?            @map("payhere_ref")
+  actorId       String?            @map("actor_id") @db.Uuid // null = Stripe webhook
+  notes         String?
+  createdAt     DateTime           @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id])
+
+  @@map("subscription_events")
+}
+
+model FeaturedListingPurchase {
+  id              String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  companyId       String   @map("company_id") @db.Uuid
+  jobId           String   @map("job_id") @db.Uuid
+  durationDays    Int      @map("duration_days") // 7, 14, or 30
+  amountLkr       Int      @map("amount_lkr")
+  stripeSessionId String?  @map("stripe_session_id")
+  startsAt        DateTime @map("starts_at") @db.Timestamptz
+  endsAt          DateTime @map("ends_at") @db.Timestamptz
+  createdAt       DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  company Company @relation(fields: [companyId], references: [id])
+  job     Job     @relation(fields: [jobId], references: [id])
+
+  @@map("featured_listing_purchases")
+}
+
+// =============================================================================
+// MODULE 6 — SUPER ADMIN: AUDIT LOG & FEATURE FLAGS
+// =============================================================================
+
+model AuditLog {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  action        String   // e.g. company.created, invitation.revoked, job.featured
+  affectedTable String?  @map("affected_table")
+  affectedId    String?  @map("affected_id") // UUID of the affected row
+  payload       Json?    // before/after snapshot or relevant data
+  ipAddress     String?  @map("ip_address")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  user User @relation(fields: [userId], references: [id])
+
+  @@index([userId])
+  @@index([affectedTable, affectedId])
+  @@map("audit_log")
+}
+
+model FeatureFlag {
+  id                String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  flagName          String   @unique @map("flag_name")
+  description       String?
+  enabledGlobally   Boolean  @default(false) @map("enabled_globally")
+  enabledCompanyIds String[] @map("enabled_company_ids") @db.Uuid // per-company overrides
+  createdAt         DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt         DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("feature_flags")
+}
+
+// =============================================================================
+// AI USAGE TRACKING (Module 10)
+// =============================================================================
+
+model AiUsageLog {
+  id           String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  functionName String   @map("function_name") // e.g. parseLinkedInProfile
+  promptVersion String  @map("prompt_version") // e.g. PARSE_CV_PROMPT_V1
+  userId       String?  @map("user_id") @db.Uuid
+  companyId    String?  @map("company_id") @db.Uuid
+  inputTokens  Int?     @map("input_tokens")
+  outputTokens Int?     @map("output_tokens")
+  latencyMs    Int?     @map("latency_ms")
+  success      Boolean  @default(true)
+  errorMessage String?  @map("error_message")
+  createdAt    DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([functionName])
+  @@index([createdAt])
+  @@map("ai_usage_log")
+}
+
+// =============================================================================
+// AI MATCH SCORE CACHE (seeker × job)
+// =============================================================================
+
+model AiMatchScoreCache {
+  id        String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  seekerId  String   @map("seeker_id") @db.Uuid
+  jobId     String   @map("job_id") @db.Uuid
+  score     Int      // 0-100
+  breakdown Json     // {skills, experience, education, location}
+  summary   String?
+  createdAt DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([seekerId, jobId])
+  @@map("ai_match_score_cache")
+}

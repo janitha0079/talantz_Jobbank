@@ -28,11 +28,12 @@ export function SimpleAuthShell({
   callbackUrl,
   error,
   defaultTab = 'login',
-  audience = 'job_seeker',
+  audience: initialAudience = 'job_seeker',
   plan = 'single',
   verified = '',
 }: Props) {
   const router = useRouter()
+  const [audience, setAudience] = useState<Audience>(initialAudience ?? 'job_seeker')
   const [tab, setTab] = useState<'login' | 'register'>(defaultTab)
   const [email, setEmail] = useState('')
   const [password, setPassword] = useState('')
@@ -44,6 +45,12 @@ export function SimpleAuthShell({
   const serverError = error ? (ERROR_MESSAGES[error] ?? ERROR_MESSAGES.Default) : null
   const displayError = localError ?? serverError
   const copy = useMemo(() => getCopy(audience, plan), [audience, plan])
+
+  function switchAudience(next: Audience) {
+    setAudience(next)
+    setLocalError(null)
+    setSuccessMessage(null)
+  }
 
   async function handleCredentials(e: React.FormEvent) {
     e.preventDefault()
@@ -72,69 +79,130 @@ export function SimpleAuthShell({
   }
 
   return (
-    <div
-      style={{
-        minHeight: '100vh',
-        display: 'grid',
-        gridTemplateColumns: 'minmax(0, 1.1fr) minmax(360px, 470px)',
-        background: 'linear-gradient(145deg, #08124f 0%, #10216b 45%, #1B3DE0 100%)',
-      }}
-    >
-      <div style={{ padding: '56px clamp(24px, 5vw, 72px)', color: '#fff', display: 'flex', alignItems: 'center' }}>
-        <div style={{ maxWidth: '620px' }}>
-          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', gap: '10px', color: '#fff', textDecoration: 'none', marginBottom: '28px' }}>
-            <div style={{ width: '36px', height: '36px', borderRadius: '10px', background: 'linear-gradient(135deg, var(--gold), #fff1a5)', color: 'var(--royal-deep)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 800 }}>
-              T
-            </div>
-            <span style={{ fontWeight: 700, fontSize: '1.05rem' }}>TalentAI.lk</span>
+    <div style={{
+      minHeight: '100vh',
+      display: 'grid',
+      gridTemplateColumns: 'minmax(0, 1.1fr) minmax(380px, 490px)',
+      background: 'radial-gradient(120% 130% at 78% -10%, var(--space-2) 0%, var(--space-1) 46%, var(--space-0) 100%)',
+    }}>
+      {/* ── Left: hero ── */}
+      <div style={{ position: 'relative', overflow: 'hidden', padding: '56px clamp(24px, 5vw, 72px)', color: '#fff', display: 'flex', alignItems: 'center' }}>
+        {/* Mesh */}
+        <div style={{ position: 'absolute', inset: 0, overflow: 'hidden', pointerEvents: 'none' }}>
+          <div style={{ position: 'absolute', top: '-30%', left: '-6%', width: 380, height: 380, borderRadius: '50%', background: 'radial-gradient(circle, rgba(79,110,255,.45), transparent 64%)', filter: 'blur(28px)', animation: 'drift1 17s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', bottom: '-40%', right: '-4%', width: 440, height: 440, borderRadius: '50%', background: 'radial-gradient(circle, rgba(245,184,0,.2), transparent 62%)', filter: 'blur(32px)', animation: 'drift2 21s ease-in-out infinite' }} />
+          <div style={{ position: 'absolute', inset: 0, opacity: .25, backgroundImage: 'linear-gradient(rgba(255,255,255,.06) 1px,transparent 1px),linear-gradient(90deg,rgba(255,255,255,.06) 1px,transparent 1px)', backgroundSize: '52px 52px' }} />
+        </div>
+
+        <div style={{ position: 'relative', maxWidth: '580px' }}>
+          {/* Logo */}
+          <a href="/" style={{ display: 'inline-flex', alignItems: 'center', textDecoration: 'none', marginBottom: '36px' }}>
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/talantz-logo.png" alt="Talantz" style={{ height: 32, width: 'auto', display: 'block' }} />
           </a>
 
-          <p style={{ fontSize: '0.78rem', letterSpacing: '0.08em', textTransform: 'uppercase', color: 'rgba(255,255,255,0.7)', marginBottom: '12px' }}>
+          {/* Badge */}
+          <div className="tag" style={{ background: 'rgba(245,184,0,.13)', color: 'var(--gold-soft)', border: '1px solid rgba(245,184,0,.32)', marginBottom: 20 }}>
+            <span style={{ width: 6, height: 6, borderRadius: '50%', background: 'var(--gold)', display: 'inline-block', flexShrink: 0, animation: 'pulse 2s infinite' }} />
             {copy.badge}
-          </p>
-          <h1 style={{ fontSize: 'clamp(2.4rem, 5vw, 4.2rem)', color: '#fff', marginBottom: '14px' }}>
-            {copy.title}
+          </div>
+
+          {/* Headline — mixed font */}
+          <h1 style={{
+            fontFamily: 'var(--ff)', fontSize: 'clamp(2.6rem, 4.5vw, 4.4rem)',
+            fontWeight: 800, letterSpacing: '-0.02em',
+            color: '#fff', marginBottom: 16, lineHeight: 1.06,
+          }}>
+            {audience === 'job_seeker' ? (
+              <>Sign in to your<br /><span style={{ fontFamily: 'var(--ff-serif)', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold-soft)', letterSpacing: 0 }}>job seeker</span> account.</>
+            ) : (
+              <>Sign in to your<br /><span style={{ fontFamily: 'var(--ff-serif)', fontStyle: 'italic', fontWeight: 600, color: 'var(--gold-soft)', letterSpacing: 0 }}>employer</span> workspace.</>
+            )}
           </h1>
-          <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,0.82)', maxWidth: '54ch', marginBottom: '24px' }}>
+
+          <p style={{ fontSize: '1rem', color: 'rgba(255,255,255,.75)', maxWidth: '48ch', marginBottom: 24, lineHeight: 1.65 }}>
             {copy.description}
           </p>
 
-          <div style={{ display: 'grid', gap: '10px', maxWidth: '520px', marginBottom: '20px' }}>
+          <div style={{ display: 'grid', gap: 10, maxWidth: '500px', marginBottom: 28 }}>
             {copy.highlights.map((item) => (
-              <div key={item} style={{ padding: '14px 16px', borderRadius: '16px', background: 'rgba(255,255,255,0.08)', border: '1px solid rgba(255,255,255,0.12)' }}>
-                <p style={{ fontSize: '0.9rem', color: '#fff' }}>{item}</p>
+              <div key={item} style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '13px 16px', borderRadius: 14, background: 'rgba(255,255,255,.07)', border: '1px solid rgba(255,255,255,.1)' }}>
+                <svg width="16" height="16" viewBox="0 0 16 16" fill="none" style={{ flexShrink: 0 }}>
+                  <circle cx="8" cy="8" r="8" fill="var(--gold)" opacity=".2" />
+                  <path d="M4.5 8l2.5 2.5 4.5-4.5" stroke="var(--gold)" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+                </svg>
+                <p style={{ fontSize: '0.9rem', color: 'rgba(255,255,255,.85)', lineHeight: 1.45 }}>{item}</p>
               </div>
             ))}
           </div>
 
-          <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap' }}>
-            <a href="/jobs" className="btn" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.18)' }}>
-              Job search
-            </a>
-            <a href="/" className="btn" style={{ background: 'rgba(255,255,255,0.12)', color: '#fff', border: '1px solid rgba(255,255,255,0.18)' }}>
-              Back home
-            </a>
+          <div style={{ display: 'flex', gap: 10, flexWrap: 'wrap' }}>
+            <a href="/jobs" className="btn btn-sm" style={{ background: 'rgba(255,255,255,.1)', color: '#fff', border: '1px solid rgba(255,255,255,.18)' }}>Browse jobs</a>
+            <a href="/" className="btn btn-sm" style={{ background: 'rgba(255,255,255,.1)', color: '#fff', border: '1px solid rgba(255,255,255,.18)' }}>Back home</a>
           </div>
         </div>
       </div>
 
+      {/* ── Right: form card ── */}
       <div style={{ padding: '24px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ width: '100%', maxWidth: '460px', background: 'rgba(255,255,255,0.98)', borderRadius: '26px', padding: '32px', boxShadow: '0 24px 80px rgba(0,0,0,0.22)' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '18px' }}>
+        <div style={{ width: '100%', maxWidth: '460px', background: 'rgba(255,255,255,0.98)', borderRadius: '26px', padding: '32px', boxShadow: '0 24px 80px rgba(0,0,0,0.28)' }}>
+
+          {/* Header */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '12px', marginBottom: '20px' }}>
             <div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--ink-muted)', textTransform: 'uppercase', letterSpacing: '0.08em', marginBottom: '6px' }}>
-                {audience === 'job_seeker' ? 'Job seeker access' : 'Employer access'}
-              </p>
-              <h2 style={{ fontSize: '1.7rem', marginBottom: '4px' }}>
+              <h2 style={{ fontFamily: 'var(--ff)', fontSize: '1.55rem', fontWeight: 800, color: 'var(--ink)', marginBottom: '4px', letterSpacing: '-0.01em' }}>
                 {tab === 'login' ? copy.loginTitle : copy.registerTitle}
               </h2>
               <p style={{ fontSize: '0.88rem', color: 'var(--ink-muted)' }}>
                 {tab === 'login' ? copy.loginBlurb : copy.registerBlurb}
               </p>
             </div>
-            <a href="/" style={{ fontSize: '0.82rem', color: 'var(--royal)' }}>Back home</a>
+            <a href="/" style={{ fontSize: '0.82rem', color: 'var(--royal)', whiteSpace: 'nowrap', marginTop: 4 }}>Back home</a>
           </div>
 
+          {/* ── Audience switcher: Candidate | Employer ── */}
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 6, marginBottom: 16, padding: 4, borderRadius: 14, background: 'var(--surface)', border: '1.5px solid var(--border)' }}>
+            {([
+              { value: 'job_seeker', label: 'Candidate' },
+              { value: 'employer',   label: 'Employer'  },
+            ] as const).map(({ value, label }) => {
+              const active = audience === value
+              return (
+                <button
+                  key={value}
+                  type="button"
+                  onClick={() => switchAudience(value)}
+                  style={{
+                    padding: '10px 12px',
+                    borderRadius: 10,
+                    border: 'none',
+                    cursor: 'pointer',
+                    fontFamily: 'var(--ff)',
+                    fontWeight: 700,
+                    fontSize: '0.88rem',
+                    transition: 'all .18s',
+                    background: active
+                      ? value === 'job_seeker'
+                        ? 'linear-gradient(135deg, var(--royal), var(--electric))'
+                        : 'var(--gold)'
+                      : 'transparent',
+                    color: active
+                      ? value === 'job_seeker' ? '#fff' : 'var(--royal-deep)'
+                      : 'var(--ink-muted)',
+                    boxShadow: active
+                      ? value === 'job_seeker'
+                        ? '0 4px 14px rgba(27,61,224,.3)'
+                        : '0 4px 14px rgba(245,184,0,.3)'
+                      : 'none',
+                  }}
+                >
+                  {label}
+                </button>
+              )
+            })}
+          </div>
+
+          {/* ── Sign in / Create account tabs ── */}
           <div style={{ display: 'flex', background: 'var(--surface)', borderRadius: '12px', padding: '4px', marginBottom: '18px', gap: '4px' }}>
             {(['login', 'register'] as const).map((mode) => (
               <button
@@ -189,7 +257,7 @@ export function SimpleAuthShell({
 
               <form onSubmit={handleCredentials}>
                 <FormField label={audience === 'employer' ? 'Work email' : 'Email address'}>
-                  <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={audience === 'employer' ? 'hiring@company.lk' : 'you@example.com'} required autoComplete="email" />
+                  <input className="input" type="email" value={email} onChange={(e) => setEmail(e.target.value)} placeholder={audience === 'employer' ? 'hiring@company.lk' : 'you@example.com'} required autoComplete="email" suppressHydrationWarning />
                 </FormField>
                 <FormField label="Password">
                   <input className="input" type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Enter your password" required autoComplete="current-password" suppressHydrationWarning />
@@ -421,18 +489,18 @@ function SimpleRegisterPanel({
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
           <div>
             <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink-soft)', marginBottom: '5px' }}>First name</label>
-            <input className="input" type="text" value={form.firstName} onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))} placeholder="Nishani" required />
+            <input className="input" type="text" value={form.firstName} onChange={(e) => setForm((f) => ({ ...f, firstName: e.target.value }))} placeholder="Nishani" required suppressHydrationWarning />
           </div>
           <div>
             <label style={{ display: 'block', fontSize: '0.78rem', fontWeight: 600, color: 'var(--ink-soft)', marginBottom: '5px' }}>Last name</label>
-            <input className="input" type="text" value={form.lastName} onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))} placeholder="Perera" required />
+            <input className="input" type="text" value={form.lastName} onChange={(e) => setForm((f) => ({ ...f, lastName: e.target.value }))} placeholder="Perera" required suppressHydrationWarning />
           </div>
         </div>
 
         {audience === 'employer' && (
           <>
             <FormField label="Company name">
-              <input className="input" type="text" value={form.companyName} onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))} placeholder="Acme Lanka (Pvt) Ltd" required />
+              <input className="input" type="text" value={form.companyName} onChange={(e) => setForm((f) => ({ ...f, companyName: e.target.value }))} placeholder="Acme Lanka (Pvt) Ltd" required suppressHydrationWarning />
             </FormField>
             <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px', marginBottom: '14px' }}>
               <div>
@@ -458,7 +526,7 @@ function SimpleRegisterPanel({
         )}
 
         <FormField label={audience === 'employer' ? 'Work email' : 'Email address'}>
-          <input className="input" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder={audience === 'employer' ? 'hiring@company.lk' : 'you@example.com'} required autoComplete="email" />
+          <input className="input" type="email" value={form.email} onChange={(e) => setForm((f) => ({ ...f, email: e.target.value }))} placeholder={audience === 'employer' ? 'hiring@company.lk' : 'you@example.com'} required autoComplete="email" suppressHydrationWarning />
         </FormField>
         <FormField label="Password">
           <input className="input" type="password" value={form.password} onChange={(e) => setForm((f) => ({ ...f, password: e.target.value }))} placeholder="At least 8 chars, 1 uppercase, 1 number" required autoComplete="new-password" suppressHydrationWarning />

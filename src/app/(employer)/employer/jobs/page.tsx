@@ -2,6 +2,7 @@ import { auth } from '@/lib/auth'
 import { db } from '@/lib/db'
 import Link from 'next/link'
 import type { Metadata } from 'next'
+import { SiteHeader } from '@/components/navigation/SiteHeader'
 
 export const metadata: Metadata = { title: 'Manage Jobs — TalentAI.lk' }
 
@@ -42,21 +43,7 @@ export default async function EmployerJobsPage() {
 
   return (
     <div style={{ minHeight: '100vh', background: 'var(--surface)' }}>
-      {/* Nav */}
-      <nav style={{ background: '#fff', borderBottom: '1.5px solid var(--border)', padding: '0 1.5rem', position: 'sticky', top: 0, zIndex: 50 }}>
-        <div className="container" style={{ display: 'flex', alignItems: 'center', height: '60px', justifyContent: 'space-between' }}>
-          <Link href="/employer" style={{ display: 'flex', alignItems: 'center', gap: '8px', textDecoration: 'none' }}>
-            <div style={{ width: '28px', height: '28px', borderRadius: '7px', background: 'linear-gradient(135deg, var(--royal), var(--electric))', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 700, fontSize: '0.85rem' }}>T</div>
-            <span style={{ fontWeight: 700, fontSize: '1rem', color: 'var(--ink)' }}>TalentAI<span style={{ color: 'var(--royal)' }}>.lk</span></span>
-          </Link>
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.83rem', color: 'var(--ink-muted)' }}>{company?.name ?? 'No company'}</span>
-            <Link href="/employer/jobs/new" className="btn btn-primary" style={{ fontSize: '0.85rem' }}>
-              + Post job
-            </Link>
-          </div>
-        </div>
-      </nav>
+      <SiteHeader role="employer" />
 
       <div className="container" style={{ padding: '32px 1.5rem' }}>
         {/* Header */}
