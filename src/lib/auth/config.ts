@@ -8,23 +8,23 @@ import { loginSchema } from '@/lib/auth/schemas'
 
 export const authConfig: NextAuthConfig = {
   providers: [
-    // ── LinkedIn OAuth ─────────────────────────────────────────────
-    LinkedIn({
-      clientId: process.env.AUTH_LINKEDIN_ID!,
-      clientSecret: process.env.AUTH_LINKEDIN_SECRET!,
-      authorization: {
-        params: { scope: 'openid profile email' },
-      },
-    }),
+    // ── LinkedIn OAuth (only when credentials are configured) ──────
+    ...(process.env.AUTH_LINKEDIN_ID && process.env.AUTH_LINKEDIN_SECRET
+      ? [LinkedIn({
+          clientId: process.env.AUTH_LINKEDIN_ID,
+          clientSecret: process.env.AUTH_LINKEDIN_SECRET,
+          authorization: { params: { scope: 'openid profile email' } },
+        })]
+      : []),
 
-    // ── Google OAuth ───────────────────────────────────────────────
-    Google({
-      clientId: process.env.AUTH_GOOGLE_ID!,
-      clientSecret: process.env.AUTH_GOOGLE_SECRET!,
-      authorization: {
-        params: { scope: 'openid profile email' },
-      },
-    }),
+    // ── Google OAuth (only when credentials are configured) ────────
+    ...(process.env.AUTH_GOOGLE_ID && process.env.AUTH_GOOGLE_SECRET
+      ? [Google({
+          clientId: process.env.AUTH_GOOGLE_ID,
+          clientSecret: process.env.AUTH_GOOGLE_SECRET,
+          authorization: { params: { scope: 'openid profile email' } },
+        })]
+      : []),
 
     // ── Email / Password ───────────────────────────────────────────
     Credentials({
