@@ -8,6 +8,6 @@ export default async function HomePage() {
 
   const role = (session?.user?.role ?? null) as 'job_seeker' | 'employer_admin' | 'employer_member' | 'super_admin' | null
 
-  // Public landing — serve the static SPA until Next.js pages are built out
+  // Public landing page for Talantz
   return <SimpleLandingPage role={role} />
 }
