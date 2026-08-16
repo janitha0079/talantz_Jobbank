@@ -1,18 +1,15 @@
 import type { Metadata } from 'next'
-import { auth } from '@/lib/auth'
 import SessionProviderWrapper from '@/components/providers/SessionProviderWrapper'
 import './globals.css'
 import './components.css'
 
 export const metadata: Metadata = {
-  title: { default: 'TalentAI.lk', template: '%s — TalentAI.lk' },
-  description: "Sri Lanka's first AI-native job platform. Find your next role or hire your next team member.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://talentai.lk'),
+  title: { default: 'Talantz.lk', template: '%s — Talantz.lk' },
+  description: "Sri Lanka's first AI-native job platform. Hire smarter. Apply faster. Win together.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://talantz.lk'),
 }
-export const dynamic = 'force-dynamic'
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
 
   return (
     <html lang="en">
@@ -25,7 +22,7 @@ export default async function RootLayout({ children }: { children: React.ReactNo
         />
       </head>
       <body>
-        <SessionProviderWrapper session={session}>
+        <SessionProviderWrapper session={null}>
           {children}
         </SessionProviderWrapper>
       </body>
