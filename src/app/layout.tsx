@@ -6,7 +6,6 @@ import './components.css'
 export const metadata: Metadata = {
   title: { default: 'Talantz.lk', template: '%s — Talantz.lk' },
   description: "Sri Lanka's first AI-native job platform. Hire smarter. Apply faster. Win together.",
-  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL ?? 'https://talantz.lk'),
 }
 
 export default async function RootLayout({ children }: { children: React.ReactNode }) {
