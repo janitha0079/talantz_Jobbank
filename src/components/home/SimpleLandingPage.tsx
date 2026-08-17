@@ -55,7 +55,7 @@ export function SimpleLandingPage({ role = null }: { role?: Role }) {
   const isSeeker   = role === 'job_seeker'
   const isEmployer = role === 'employer_admin' || role === 'employer_member'
 
-  const defaultSide = isEmployer ? 'employer' : 'seeker'
+  const defaultSide = isSeeker ? 'seeker' : 'employer'
   const [side, setSide] = useState<'seeker' | 'employer'>(defaultSide)
 
   return (
