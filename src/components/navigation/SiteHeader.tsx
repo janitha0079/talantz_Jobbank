@@ -11,7 +11,7 @@ const NAV_LINKS: Record<Role, { href: string; label: string }[]> = {
     { href: '/jobs',                    label: 'Browse jobs' },
   ],
   job_seeker: [
-    { href: '/jobs',                    label: 'Find jobs' },
+    { href: '/dashboard',               label: 'Dashboard' },
     { href: '/applications',            label: 'Applications' },
     { href: '/profile',                 label: 'Profile' },
   ],
