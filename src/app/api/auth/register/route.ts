@@ -135,7 +135,14 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({ message }, { status: 201 })
   } catch (err) {
-    console.error('[register]', err)
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 })
+    console.error('[register] Error:', {
+      message: err instanceof Error ? err.message : String(err),
+      stack: err instanceof Error ? err.stack : undefined,
+      name: err instanceof Error ? err.name : undefined,
+    })
+    return NextResponse.json({
+      error: 'Internal server error',
+      details: process.env.NODE_ENV === 'development' ? (err instanceof Error ? err.message : String(err)) : undefined
+    }, { status: 500 })
   }
 }
