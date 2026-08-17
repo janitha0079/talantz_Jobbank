@@ -50,6 +50,7 @@ function Mesh({ soft = false }: { soft?: boolean }) {
 }
 
 export function SimpleLandingPage({ role = null }: { role?: Role }) {
+  // Force rebuild 2025-08-17
   useReveal()
 
   const isSeeker   = role === 'job_seeker'
