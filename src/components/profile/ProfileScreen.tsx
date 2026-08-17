@@ -353,6 +353,47 @@ export function ProfileScreen() {
         )}
 
         <div style={{ display: 'grid', gap: '16px' }}>
+          {/* CV Upload Section - TOP */}
+          <CVUploadSection onDataExtracted={(data) => {
+            if (data.fullName && !form.fullName) setForm({ ...form, fullName: data.fullName })
+            if (data.headline && !form.headline) setForm({ ...form, headline: data.headline })
+            if (data.summary && !form.summary) setForm({ ...form, summary: data.summary })
+            if (data.location && !form.location) setForm({ ...form, location: data.location })
+          }} />
+
+          {/* AI Tools Section - TOP */}
+          <section style={{ padding: '24px', borderRadius: '24px', border: '1px solid var(--border)', background: '#fff' }}>
+            <SectionHeader title="AI Tools" eyebrow="Powered by Claude" />
+            <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: '16px' }}>
+              Enhance your profile with AI. Get cover letters, practice interviews, and more. Free tier includes limited access.
+            </p>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+              <ActionCard
+                title="Profile Enhancement"
+                body="AI-powered suggestions to improve your bullet points"
+                href="/pricing"
+              />
+              <ActionCard
+                title="Cover Letter Generator"
+                body="Create personalized cover letters in seconds"
+                href="/pricing"
+              />
+              <ActionCard
+                title="Interview Prep"
+                body="Practice with AI-powered mock interviews"
+                href="/pricing"
+              />
+              <ActionCard
+                title="Skill Suggestions"
+                body="AI recommends skills based on your experience"
+                href="/pricing"
+              />
+            </div>
+            <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: '16px' }}>
+              <Link href="/pricing" style={{ color: 'var(--royal)', textDecoration: 'none', fontWeight: 600 }}>View pricing plans</Link> to unlock unlimited AI features
+            </p>
+          </section>
+
           <section className="card" style={{ padding: '24px', borderRadius: '24px' }}>
             <SectionHeader title="About you" eyebrow="Personal information" />
             {editing ? (
@@ -599,49 +640,6 @@ export function ProfileScreen() {
                   ))}
                 </div>
               )}
-
-              {/* AI Tools Section */}
-              <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid var(--border)' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
-                  <SectionHeader title="AI Tools" eyebrow="Powered by Claude" />
-                </div>
-                <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: '16px' }}>
-                  Enhance your profile with AI. Get cover letters, practice interviews, and more. Free tier includes limited access.
-                </p>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
-                  <ActionCard
-                    title="Profile Enhancement"
-                    body="AI-powered suggestions to improve your bullet points"
-                    href="/pricing"
-                  />
-                  <ActionCard
-                    title="Cover Letter Generator"
-                    body="Create personalized cover letters in seconds"
-                    href="/pricing"
-                  />
-                  <ActionCard
-                    title="Interview Prep"
-                    body="Practice with AI-powered mock interviews"
-                    href="/pricing"
-                  />
-                  <ActionCard
-                    title="Skill Suggestions"
-                    body="AI recommends skills based on your experience"
-                    href="/pricing"
-                  />
-                </div>
-                <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: '16px' }}>
-                  <Link href="/pricing" style={{ color: 'var(--royal)', textDecoration: 'none', fontWeight: 600 }}>View pricing plans</Link> to unlock unlimited AI features
-                </p>
-              </div>
-
-              {/* CV Upload Section */}
-              <CVUploadSection onDataExtracted={(data) => {
-                if (data.fullName && !form.fullName) setForm({ ...form, fullName: data.fullName })
-                if (data.headline && !form.headline) setForm({ ...form, headline: data.headline })
-                if (data.summary && !form.summary) setForm({ ...form, summary: data.summary })
-                if (data.location && !form.location) setForm({ ...form, location: data.location })
-              }} />
             </section>
           </div>
         </div>
