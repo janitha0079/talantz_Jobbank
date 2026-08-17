@@ -8,6 +8,7 @@ const { auth } = NextAuth(edgeAuthConfig)
 // Routes that require authentication
 const PROTECTED: Record<string, string[]> = {
   '/profile':   ['job_seeker'],
+  '/dashboard': ['job_seeker'],
   '/my-apps':   ['job_seeker'],
   '/employer':  ['employer_admin', 'employer_member'],
   '/onboarding':['employer_admin', 'employer_member'],
@@ -19,7 +20,7 @@ const PROTECTED: Record<string, string[]> = {
 }
 
 // Public routes — never redirect
-const PUBLIC = ['/', '/login', '/register', '/jobs', '/companies', '/api/auth', '/api/inngest']
+const PUBLIC = ['/', '/login', '/register', '/jobs', '/companies', '/api/auth', '/api/inngest', '/pricing']
 
 export async function middleware(req: NextRequest) {
   const { pathname } = req.nextUrl
