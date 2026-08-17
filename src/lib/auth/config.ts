@@ -29,27 +29,32 @@ export const authConfig: NextAuthConfig = {
     // ── Email / Password ───────────────────────────────────────────
     Credentials({
       async authorize(credentials) {
-        const parsed = loginSchema.safeParse(credentials)
-        if (!parsed.success) return null
+        try {
+          const parsed = loginSchema.safeParse(credentials)
+          if (!parsed.success) return null
 
-        const { email, password } = parsed.data
+          const { email, password } = parsed.data
 
-        const user = await db.user.findUnique({
-          where: { email: email.toLowerCase(), deletedAt: null },
-        })
+          const user = await db.user.findUnique({
+            where: { email: email.toLowerCase(), deletedAt: null },
+          })
 
-        if (!user || !user.passwordHash) return null
-        if (!user.emailVerified) return null
+          if (!user || !user.passwordHash) return null
+          if (!user.emailVerified) return null
 
-        const valid = await bcrypt.compare(password, user.passwordHash)
-        if (!valid) return null
+          const valid = await bcrypt.compare(password, user.passwordHash)
+          if (!valid) return null
 
-        return {
-          id: user.id,
-          email: user.email,
-          role: user.role,
-          name: null,
-          image: null,
+          return {
+            id: user.id,
+            email: user.email,
+            role: user.role,
+            name: null,
+            image: null,
+          }
+        } catch (err) {
+          console.error('[auth-credentials]', err)
+          return null
         }
       },
     }),
