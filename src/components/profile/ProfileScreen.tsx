@@ -599,6 +599,41 @@ export function ProfileScreen() {
                   ))}
                 </div>
               )}
+
+              {/* AI Tools Section */}
+              <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid var(--border)' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
+                  <SectionHeader title="AI Tools" eyebrow="Powered by Claude" />
+                </div>
+                <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: '16px' }}>
+                  Enhance your profile with AI. Get cover letters, practice interviews, and more. Free tier includes limited access.
+                </p>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '12px' }}>
+                  <ActionCard
+                    title="Profile Enhancement"
+                    body="AI-powered suggestions to improve your bullet points"
+                    href="/pricing"
+                  />
+                  <ActionCard
+                    title="Cover Letter Generator"
+                    body="Create personalized cover letters in seconds"
+                    href="/pricing"
+                  />
+                  <ActionCard
+                    title="Interview Prep"
+                    body="Practice with AI-powered mock interviews"
+                    href="/pricing"
+                  />
+                  <ActionCard
+                    title="Skill Suggestions"
+                    body="AI recommends skills based on your experience"
+                    href="/pricing"
+                  />
+                </div>
+                <p style={{ fontSize: '0.8rem', color: 'var(--ink-muted)', marginTop: '16px' }}>
+                  <Link href="/pricing" style={{ color: 'var(--royal)', textDecoration: 'none', fontWeight: 600 }}>View pricing plans</Link> to unlock unlimited AI features
+                </p>
+              </div>
             </section>
           </div>
         </div>
