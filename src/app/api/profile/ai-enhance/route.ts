@@ -5,6 +5,7 @@ import { z } from 'zod'
 import { requireSeeker } from '@/lib/auth'
 import { enhanceBulletPoint, suggestProfileSkills } from '@/lib/ai'
 import { db } from '@/lib/db'
+import { checkAIFeatureAccess, recordAIFeatureUsage } from '@/lib/features/access-control'
 
 const enhanceSchema = z.object({
   action: z.enum(['enhance_bullet', 'suggest_skills']),
@@ -20,12 +21,38 @@ export async function POST(req: NextRequest) {
     const body = await req.json()
     const { action, bullet, title, company } = enhanceSchema.parse(body)
 
+    // Check feature access
+    const access = await checkAIFeatureAccess(session.user.id, action as any)
+
+    if (!access.allowed) {
+      return NextResponse.json(
+        {
+          error: 'Limit reached',
+          message: access.message,
+          feature: action,
+          remaining: access.remaining,
+          limit: access.limit,
+          shouldShowUpsell: access.shouldShowUpsell,
+          nextResetDate: access.nextResetDate,
+        },
+        { status: 429 }
+      )
+    }
+
     if (action === 'enhance_bullet') {
       if (!bullet || !title || !company) {
         return NextResponse.json({ error: 'bullet, title and company required' }, { status: 400 })
       }
       const suggestions = await enhanceBulletPoint(bullet, { title, company }, session.user.id)
-      return NextResponse.json({ data: suggestions })
+
+      // Record usage
+      await recordAIFeatureUsage(session.user.id, 'enhance_bullet')
+
+      return NextResponse.json({
+        data: suggestions,
+        remaining: access.remaining - 1,
+        limit: access.limit,
+      })
     }
 
     if (action === 'suggest_skills') {
@@ -41,7 +68,15 @@ export async function POST(req: NextRequest) {
         currentSkills: profile.skills,
         userId: session.user.id,
       })
-      return NextResponse.json({ data: suggestions })
+
+      // Record usage
+      await recordAIFeatureUsage(session.user.id, 'suggest_skills')
+
+      return NextResponse.json({
+        data: suggestions,
+        remaining: access.remaining - 1,
+        limit: access.limit,
+      })
     }
 
     return NextResponse.json({ error: 'Invalid action' }, { status: 400 })
