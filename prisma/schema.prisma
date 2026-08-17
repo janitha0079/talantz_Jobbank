@@ -128,6 +128,11 @@ model User {
   updatedAt     DateTime  @updatedAt @map("updated_at") @db.Timestamptz
   deletedAt     DateTime? @map("deleted_at") @db.Timestamptz // soft delete
 
+  // Subscription fields (for job seekers)
+  seekerSubscriptionTier    String?   @default("free") @map("seeker_subscription_tier")
+  seekerSubscriptionStatus  String?   @default("free") @map("seeker_subscription_status")
+  seekerSubscriptionExpiresAt DateTime? @map("seeker_subscription_expires_at") @db.Timestamptz
+
   // Relations
   oauthAccounts    OAuthAccount[]
   seekerProfile    SeekerProfile?
@@ -641,4 +646,70 @@ model AiMatchScoreCache {
 
   @@unique([seekerId, jobId])
   @@map("ai_match_score_cache")
+}
+
+// =============================================================================
+// CANDIDATE MONETIZATION (Subscription & Feature Limits)
+// =============================================================================
+
+model AiFeatureUsage {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  featureName   String   @map("feature_name")
+  usageCount    Int      @default(0) @map("usage_count")
+  lastUsedAt    DateTime? @map("last_used_at") @db.Timestamptz
+  resetDate     DateTime @default(now()) @map("reset_date") @db.Timestamptz
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@unique([userId, featureName], name: "user_id_feature_name")
+  @@index([userId])
+  @@map("ai_feature_usage")
+}
+
+model CandidateSubscriptionPlan {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tier          String   @unique
+  name          String
+  priceLkr      Int      @map("price_lkr")
+  billingPeriod String   @default("monthly") @map("billing_period")
+  description   String?
+  isActive      Boolean  @default(true) @map("is_active")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz
+
+  limits FeatureLimit[]
+
+  @@map("candidate_subscription_plans")
+}
+
+model FeatureLimit {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  tier          String   @map("tier")
+  featureName   String   @map("feature_name")
+  limitValue    Int?     @map("limit_value")
+  resetPeriod   String   @default("monthly") @map("reset_period")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  plan CandidateSubscriptionPlan @relation(fields: [tier], references: [tier], onDelete: Cascade)
+
+  @@unique([tier, featureName], name: "tier_feature_name")
+  @@index([tier])
+  @@map("feature_limits")
+}
+
+model SeekerSubscriptionHistory {
+  id            String   @id @default(dbgenerated("uuid_generate_v4()")) @db.Uuid
+  userId        String   @map("user_id") @db.Uuid
+  fromTier      String   @default("free") @map("from_tier")
+  toTier        String   @map("to_tier")
+  paymentId     String?  @map("payment_id")
+  status        String   @default("active")
+  startedAt     DateTime @default(now()) @map("started_at") @db.Timestamptz
+  expiresAt     DateTime? @map("expires_at") @db.Timestamptz
+  autoRenew     Boolean  @default(true) @map("auto_renew")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz
+
+  @@index([userId])
+  @@map("seeker_subscription_history")
 }

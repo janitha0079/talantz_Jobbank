@@ -4,11 +4,48 @@ import { useEffect, useState } from 'react'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/navigation/SiteHeader'
 import { PricingCard } from '@/components/features/FeaturePaywall'
-import { getPlanDetails } from '@/lib/features/access-control'
 
 export default function PricingPage() {
   const [session, setSession] = useState<any>(null)
   const [loading, setLoading] = useState(true)
+
+  const planDetails = {
+    free: {
+      name: 'Free',
+      price: 0,
+      billing: 'free',
+      features: [
+        '3 enhanced bullets/month',
+        '1 skill suggestion/month',
+        '1 cover letter/week',
+        'Basic job search',
+      ],
+    },
+    premium: {
+      name: 'Premium',
+      price: 999,
+      billing: 'monthly',
+      features: [
+        'Unlimited bullet enhancements',
+        'Unlimited skill suggestions',
+        'Unlimited cover letters',
+        '5 interview prep sessions/month',
+        'Resume review AI feedback',
+      ],
+    },
+    professional: {
+      name: 'Professional',
+      price: 2499,
+      billing: 'monthly',
+      features: [
+        'Everything in Premium',
+        'Unlimited interview prep',
+        '1 career coaching session/month',
+        'Salary benchmarking',
+        'Priority job matching',
+      ],
+    },
+  }
 
   useEffect(() => {
     fetch('/api/auth/session')
@@ -17,17 +54,11 @@ export default function PricingPage() {
       .finally(() => setLoading(false))
   }, [])
 
-  const plans = ['free', 'premium', 'professional'] as const
-  const planDetails = Object.fromEntries(
-    plans.map((tier) => [tier, getPlanDetails(tier)])
-  )
-
   return (
     <div style={{ minHeight: '100vh', background: 'var(--surface)' }}>
       <SiteHeader role={session?.role === 'job_seeker' ? 'job_seeker' : 'guest'} current="/pricing" subtitle="Unlock AI features" />
 
       <div style={{ maxWidth: '1200px', margin: '0 auto', padding: '48px 24px' }}>
-        {/* Hero */}
         <div style={{ textAlign: 'center', marginBottom: '56px' }}>
           <h1 style={{ fontSize: 'clamp(2rem, 5vw, 3.5rem)', fontWeight: 800, marginBottom: '16px', fontFamily: 'var(--ff-serif)' }}>
             Accelerate Your Job Search
@@ -37,7 +68,6 @@ export default function PricingPage() {
           </p>
         </div>
 
-        {/* Pricing grid */}
         <div
           style={{
             display: 'grid',
@@ -46,8 +76,8 @@ export default function PricingPage() {
             marginBottom: '48px',
           }}
         >
-          {plans.map((tier) => {
-            const details = planDetails[tier]
+          {['free', 'premium', 'professional'].map((tier) => {
+            const details = planDetails[tier as keyof typeof planDetails]
             return (
               <PricingCard
                 key={tier}
@@ -58,7 +88,6 @@ export default function PricingPage() {
                 features={details.features}
                 isPopular={tier === 'premium'}
                 onSelect={() => {
-                  // TODO: Redirect to checkout
                   window.location.href = `/checkout?tier=${tier}`
                 }}
               />
@@ -66,7 +95,6 @@ export default function PricingPage() {
           })}
         </div>
 
-        {/* FAQ */}
         <div style={{ maxWidth: '800px', margin: '0 auto' }}>
           <h2 style={{ fontSize: '2rem', fontWeight: 700, marginBottom: '32px', textAlign: 'center' }}>
             Frequently Asked Questions
@@ -80,7 +108,7 @@ export default function PricingPage() {
               },
               {
                 q: 'Do you offer refunds?',
-                a: 'We offer a 7-day money-back guarantee if you're not satisfied. No questions asked.',
+                a: 'We offer a 7-day money-back guarantee if you\'re not satisfied. No questions asked.',
               },
               {
                 q: 'Will my data be safe?',
@@ -88,7 +116,7 @@ export default function PricingPage() {
               },
               {
                 q: 'Can I cancel anytime?',
-                a: 'Yes, cancel anytime. You'll keep access until the end of your billing period.',
+                a: 'Yes, cancel anytime. You\'ll keep access until the end of your billing period.',
               },
               {
                 q: 'What payment methods do you accept?',
@@ -115,7 +143,6 @@ export default function PricingPage() {
           </div>
         </div>
 
-        {/* CTA */}
         <div
           style={{
             background: 'linear-gradient(135deg, var(--royal), #2E5BFF)',

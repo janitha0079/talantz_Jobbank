@@ -12,9 +12,6 @@ interface FeaturePaywallProps {
   onUpgrade?: () => void
 }
 
-/**
- * Soft upsell paywall shown when user hits feature limit
- */
 export function FeaturePaywall({
   feature,
   tier,
@@ -27,18 +24,18 @@ export function FeaturePaywall({
 
   if (dismissed) return null
 
-  const messages = {
+  const messages: Record<string, string> = {
     enhance_bullet:
-      'You've enhanced 3 bullets! Upgrade to unlock unlimited professional enhancements across your entire profile.',
+      "You've enhanced 3 bullets! Upgrade to unlock unlimited professional enhancements across your entire profile.",
     suggest_skills:
-      'Love the skill suggestions? Premium members get unlimited suggestions every month.',
+      "Love the skill suggestions? Premium members get unlimited suggestions every month.",
     cover_letter:
-      'Candidates who use multiple cover letters get 60% more interview calls. Upgrade for unlimited.',
+      "Candidates who use multiple cover letters get 60% more interview calls. Upgrade for unlimited.",
     interview_prep:
-      'Start preparing with AI interview coaching. Premium gets 5 sessions/month, Professional gets unlimited.',
+      "Start preparing with AI interview coaching. Premium gets 5 sessions/month, Professional gets unlimited.",
   }
 
-  const upgradeBenefits = {
+  const upgradeBenefits: Record<string, string[]> = {
     enhance_bullet: ['Unlimited bullets', 'Better AI suggestions', 'Professional polish'],
     suggest_skills: ['Unlimited suggestions', 'Trending skill insights', 'Career growth'],
     cover_letter: ['Unlimited letters', 'Personalized templates', 'Higher response rate'],
@@ -56,7 +53,6 @@ export function FeaturePaywall({
         position: 'relative',
       }}
     >
-      {/* Close button */}
       <button
         onClick={() => setDismissed(true)}
         style={{
@@ -74,29 +70,26 @@ export function FeaturePaywall({
         ✕
       </button>
 
-      {/* Content */}
       <div style={{ marginBottom: '12px' }}>
         <p style={{ fontSize: '0.875rem', fontWeight: 600, color: '#1B3DE0', marginBottom: '8px', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
           Unlock Premium
         </p>
         <p style={{ fontSize: '1rem', fontWeight: 500, color: '#334159', marginBottom: '8px' }}>
-          {messages[feature as keyof typeof messages] || 'Upgrade to unlock more features'}
+          {messages[feature] || 'Upgrade to unlock more features'}
         </p>
         <p style={{ fontSize: '0.78rem', color: '#7580A0' }}>
           Reset in {resetPeriod} • {remaining} of {limit} uses remaining
         </p>
       </div>
 
-      {/* Benefits preview */}
       <div style={{ display: 'flex', gap: '12px', marginBottom: '16px', flexWrap: 'wrap' }}>
-        {(upgradeBenefits[feature as keyof typeof upgradeBenefits] || []).map((benefit, i) => (
+        {(upgradeBenefits[feature] || []).map((benefit, i) => (
           <div key={i} style={{ fontSize: '0.75rem', background: '#fff', padding: '4px 10px', borderRadius: '6px', color: '#1B3DE0', fontWeight: 500 }}>
             ✓ {benefit}
           </div>
         ))}
       </div>
 
-      {/* CTA buttons */}
       <div style={{ display: 'flex', gap: '10px' }}>
         <Link href="/pricing" style={{ textDecoration: 'none' }}>
           <button
@@ -138,11 +131,8 @@ export function FeaturePaywall({
   )
 }
 
-/**
- * Show usage counter with progress indicator
- */
 export function FeatureUsageCounter({ remaining, limit, resetPeriod }: { remaining: number; limit: number; resetPeriod: string }) {
-  if (limit === 999999) return null // Unlimited
+  if (limit === 999999) return null
 
   const percent = Math.round(((limit - remaining) / limit) * 100)
   const isWarning = remaining <= 1
@@ -151,7 +141,6 @@ export function FeatureUsageCounter({ remaining, limit, resetPeriod }: { remaini
   return (
     <div style={{ marginTop: '12px', display: 'flex', alignItems: 'center', gap: '10px' }}>
       <div style={{ flex: 1, minWidth: 0 }}>
-        {/* Progress bar */}
         <div style={{ height: '4px', background: '#E5E7EB', borderRadius: '2px', overflow: 'hidden' }}>
           <div
             style={{
@@ -170,9 +159,16 @@ export function FeatureUsageCounter({ remaining, limit, resetPeriod }: { remaini
   )
 }
 
-/**
- * Pricing card for the pricing page
- */
+interface PricingCardProps {
+  tier: string
+  name: string
+  price: number
+  billing: string
+  features: string[]
+  isPopular?: boolean
+  onSelect?: () => void
+}
+
 export function PricingCard({
   tier,
   name,
@@ -181,15 +177,7 @@ export function PricingCard({
   features,
   isPopular,
   onSelect,
-}: {
-  tier: string
-  name: string
-  price: number
-  billing: string
-  features: string[]
-  isPopular?: boolean
-  onSelect?: () => void
-}) {
+}: PricingCardProps) {
   return (
     <div
       style={{
@@ -255,7 +243,7 @@ export function PricingCard({
           border: 'none',
           borderRadius: '10px',
           fontSize: '0.875rem',
-          fontWeight: 600',
+          fontWeight: 600,
           cursor: 'pointer',
           marginBottom: '20px',
           transition: 'all 0.2s',
