@@ -1,6 +1,6 @@
 'use client'
 
-import { ChangeEvent, useEffect, useMemo, useState } from 'react'
+import React, { ChangeEvent, useEffect, useMemo, useState } from 'react'
 import Link from 'next/link'
 import { SiteHeader } from '@/components/navigation/SiteHeader'
 
@@ -634,6 +634,14 @@ export function ProfileScreen() {
                   <Link href="/pricing" style={{ color: 'var(--royal)', textDecoration: 'none', fontWeight: 600 }}>View pricing plans</Link> to unlock unlimited AI features
                 </p>
               </div>
+
+              {/* CV Upload Section */}
+              <CVUploadSection onDataExtracted={(data) => {
+                if (data.fullName && !form.fullName) setForm({ ...form, fullName: data.fullName })
+                if (data.headline && !form.headline) setForm({ ...form, headline: data.headline })
+                if (data.summary && !form.summary) setForm({ ...form, summary: data.summary })
+                if (data.location && !form.location) setForm({ ...form, location: data.location })
+              }} />
             </section>
           </div>
         </div>
@@ -752,4 +760,132 @@ function ValidationBadge({
 function formatMonthYear(value: string | null | undefined) {
   if (!value) return 'Date not set'
   return new Date(value).toLocaleDateString('en-GB', { month: 'short', year: 'numeric' })
+}
+
+function CVUploadSection({ onDataExtracted }: { onDataExtracted: (data: any) => void }) {
+  const [uploading, setUploading] = useState(false)
+  const [uploadError, setUploadError] = useState<string | null>(null)
+  const [extractedData, setExtractedData] = useState<any>(null)
+  const fileInputRef = React.useRef<HTMLInputElement>(null)
+
+  async function handleFileUpload(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    if (file.size > 10 * 1024 * 1024) {
+      setUploadError('File must be less than 10MB')
+      return
+    }
+
+    setUploading(true)
+    setUploadError(null)
+
+    const formData = new FormData()
+    formData.append('file', file)
+
+    try {
+      const res = await fetch('/api/profile/parse-cv', {
+        method: 'POST',
+        body: formData,
+      })
+
+      if (!res.ok) {
+        const error = await res.json()
+        setUploadError(error.error || 'Failed to parse CV')
+        return
+      }
+
+      const data = await res.json()
+      setExtractedData(data)
+      onDataExtracted(data)
+    } catch (err) {
+      console.error(err)
+      setUploadError('Failed to upload CV. Please try again.')
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  return (
+    <div style={{ marginTop: '48px', paddingTop: '32px', borderTop: '1px solid var(--border)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', gap: '12px', alignItems: 'center', marginBottom: '14px', flexWrap: 'wrap' }}>
+        <SectionHeader title="Upload CV" eyebrow="Auto-fill your profile" />
+      </div>
+      <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)', marginBottom: '16px' }}>
+        Upload your CV to automatically populate your profile information. We'll extract your work experience, education, and skills.
+      </p>
+
+      <div style={{
+        border: '2px dashed var(--border)',
+        borderRadius: '12px',
+        padding: '32px',
+        textAlign: 'center',
+        background: 'rgba(27, 61, 224, 0.02)',
+        cursor: 'pointer',
+        transition: 'all 0.2s',
+      }}
+      onClick={() => fileInputRef.current?.click()}
+      onDragOver={(e) => {
+        e.preventDefault()
+        e.currentTarget.style.borderColor = 'var(--royal)'
+        e.currentTarget.style.background = 'rgba(27, 61, 224, 0.08)'
+      }}
+      onDragLeave={(e) => {
+        e.currentTarget.style.borderColor = 'var(--border)'
+        e.currentTarget.style.background = 'rgba(27, 61, 224, 0.02)'
+      }}
+      onDrop={(e) => {
+        e.preventDefault()
+        const files = e.dataTransfer.files
+        if (files.length) {
+          const event = new Event('change', { bubbles: true })
+          Object.defineProperty(event, 'target', {
+            writable: false,
+            value: { files },
+          })
+          handleFileUpload(event as any)
+        }
+      }}
+      >
+        <input
+          ref={fileInputRef}
+          type="file"
+          accept=".pdf,.doc,.docx,.txt"
+          onChange={handleFileUpload}
+          disabled={uploading}
+          style={{ display: 'none' }}
+        />
+        <div style={{ fontSize: '32px', marginBottom: '12px' }}>📄</div>
+        <p style={{ fontSize: '0.95rem', fontWeight: 600, color: 'var(--ink)', marginBottom: '4px' }}>
+          {uploading ? 'Uploading...' : 'Drop your CV here or click to upload'}
+        </p>
+        <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)' }}>
+          Supports PDF, DOC, DOCX, and TXT files (max 10MB)
+        </p>
+      </div>
+
+      {uploadError && (
+        <div style={{
+          marginTop: '12px',
+          padding: '12px 16px',
+          background: '#fee2e2',
+          border: '1px solid #fca5a5',
+          borderRadius: '8px',
+          color: '#991b1b',
+          fontSize: '0.85rem',
+        }}>
+          {uploadError}
+        </div>
+      )}
+
+      {extractedData && (
+        <div style={{ marginTop: '16px', padding: '16px', background: 'var(--surface)', borderRadius: '8px', border: '1px solid var(--border)' }}>
+          <p style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--royal)', marginBottom: '12px' }}>✓ CV parsed successfully!</p>
+          <p style={{ fontSize: '0.85rem', color: 'var(--ink-muted)' }}>
+            Suggested information has been added to your profile. You can edit the fields above.
+          </p>
+        </div>
+      )}
+    </div>
+  )
 }
