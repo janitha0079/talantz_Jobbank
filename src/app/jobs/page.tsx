@@ -101,7 +101,7 @@ export default async function JobsPage({
       {/* Hero with PageHero */}
       <PageHero eyebrow="For people looking for work" pad="34px 0 40px">
         <div>
-          <h1 style={{ fontSize: 'clamp(2rem,3.6vw,3.1rem)', fontWeight: 800, marginBottom: '8px', lineHeight: 1.1 }}>
+          <h1 style={{ fontSize: 'clamp(2rem,3.6vw,3.1rem)', fontWeight: 800, marginBottom: '8px', lineHeight: 1.1, color: '#fff' }}>
             Discover jobs that <span style={{ fontFamily: 'var(--ff-serif)', fontStyle: 'italic', color: 'var(--gold-soft)' }}>fit</span>
           </h1>
           <p style={{ color: 'rgba(255,255,255,0.72)', marginBottom: '28px', fontSize: '0.95rem' }}>
