@@ -1,31 +1,43 @@
 import { auth } from '@/lib/auth'
 import { NextRequest, NextResponse } from 'next/server'
-import { writeFile, readFile, unlink } from 'fs/promises'
-import { join } from 'path'
-import { tmpdir } from 'os'
-import { randomBytes } from 'crypto'
 
-async function extractTextFromFile(filePath: string, mimeType: string): Promise<string> {
-  if (mimeType === 'application/pdf') {
-    const PdfParse = await import('pdf-parse/lib/pdf-parse.js')
-    const pdfBuffer = await readFile(filePath)
-    const data = await PdfParse.default(pdfBuffer)
-    return data.text
+async function extractTextFromBuffer(buffer: Buffer, mimeType: string, fileName: string): Promise<string> {
+  const lowerFileName = fileName.toLowerCase()
+
+  if (mimeType === 'application/pdf' || lowerFileName.endsWith('.pdf')) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const pdfParse = require('pdf-parse')
+      const data = await pdfParse(buffer)
+      return data.text || ''
+    } catch (err) {
+      console.error('PDF parse error:', err)
+      throw new Error('Failed to parse PDF file')
+    }
   }
 
-  if (mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' || mimeType === 'application/msword') {
-    const mammoth = await import('mammoth')
-    const buffer = await readFile(filePath)
-    const result = await mammoth.default.extractRawText({ buffer })
-    return result.value
+  if (
+    mimeType === 'application/vnd.openxmlformats-officedocument.wordprocessingml.document' ||
+    mimeType === 'application/msword' ||
+    lowerFileName.endsWith('.docx') ||
+    lowerFileName.endsWith('.doc')
+  ) {
+    try {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const mammoth = require('mammoth')
+      const result = await mammoth.extractRawText({ buffer })
+      return result.value || ''
+    } catch (err) {
+      console.error('DOCX parse error:', err)
+      throw new Error('Failed to parse Word document')
+    }
   }
 
-  if (mimeType === 'text/plain') {
-    const buffer = await readFile(filePath)
+  if (mimeType === 'text/plain' || lowerFileName.endsWith('.txt')) {
     return buffer.toString('utf-8')
   }
 
-  throw new Error(`Unsupported file type: ${mimeType}`)
+  throw new Error(`Unsupported file type: ${mimeType || 'unknown'}`)
 }
 
 function parseCV(text: string) {
@@ -150,24 +162,34 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'No file provided' }, { status: 400 })
     }
 
-    const buffer = await file.arrayBuffer()
-    const tempPath = join(tmpdir(), `cv-${randomBytes(8).toString('hex')}`)
+    if (file.size > 10 * 1024 * 1024) {
+      return NextResponse.json({ error: 'File is too large (max 10MB)' }, { status: 400 })
+    }
 
-    await writeFile(tempPath, Buffer.from(buffer))
+    const buffer = Buffer.from(await file.arrayBuffer())
 
     try {
-      const text = await extractTextFromFile(tempPath, file.type)
-      const data = parseCV(text)
+      const text = await extractTextFromBuffer(buffer, file.type, file.name)
 
+      if (!text || text.trim().length === 0) {
+        return NextResponse.json(
+          { error: 'Could not extract text from file. Try a different file.' },
+          { status: 400 },
+        )
+      }
+
+      const data = parseCV(text)
       return NextResponse.json(data)
-    } finally {
-      await unlink(tempPath).catch(() => {})
+    } catch (parseErr) {
+      console.error('[parse-cv-parse]', parseErr)
+      const errorMsg = parseErr instanceof Error ? parseErr.message : 'Failed to parse file'
+      return NextResponse.json({ error: errorMsg }, { status: 400 })
     }
   } catch (error) {
     console.error('[parse-cv]', error)
     return NextResponse.json(
-      { error: error instanceof Error ? error.message : 'Failed to parse CV' },
-      { status: 400 },
+      { error: error instanceof Error ? error.message : 'Failed to process CV' },
+      { status: 500 },
     )
   }
 }
