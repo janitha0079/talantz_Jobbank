@@ -311,7 +311,7 @@ function getCopy(audience: Audience, plan: Plan) {
   }
 
   return {
-    badge: 'Job seekers | LinkedIn import',
+    badge: '',
     title: 'Sign in to your job seeker account.',
     description: 'Build your profile, search jobs, and apply faster with a cleaner flow.',
     highlights: [
