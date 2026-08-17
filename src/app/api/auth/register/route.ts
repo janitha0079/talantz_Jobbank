@@ -37,12 +37,9 @@ export async function POST(req: NextRequest) {
     // Hash password (cost 12 per spec)
     const passwordHash = await bcrypt.hash(password, 12)
 
-    // In dev (or when Resend isn't configured) skip email verification so
-    // users can sign in immediately without needing a real email API key.
-    const skipVerification =
-      process.env.NODE_ENV !== 'production' ||
-      !process.env.RESEND_API_KEY ||
-      process.env.RESEND_API_KEY === ''
+    // Skip email verification - Resend API not configured
+    // Users can sign in immediately. Email verification can be added later.
+    const skipVerification = true
 
     const user = await db.$transaction(async (tx) => {
       if (parsed.data.audience === 'employer') {
