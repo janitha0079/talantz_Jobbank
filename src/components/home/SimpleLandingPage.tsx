@@ -74,7 +74,7 @@ export function SimpleLandingPage({ role = null }: { role?: Role }) {
             <img src="/talantz-logo.png" alt="Talantz" style={{ height: 30, width: 'auto', display: 'block' }} />
           </Link>
           <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            <Link href="/jobs" className="btn btn-sm" style={{ background: 'rgba(255,255,255,.08)', color: 'rgba(255,255,255,.85)', border: '1px solid rgba(255,255,255,.14)' }}>
+            <Link href="/jobs" className="btn btn-sm" style={{ background: 'rgba(255,255,255,.08)', color: 'var(--gold)', border: '1px solid rgba(255,255,255,.14)' }}>
               Browse jobs
             </Link>
             {role ? (
