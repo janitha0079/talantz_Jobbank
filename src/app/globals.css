@@ -683,7 +683,7 @@ select.search-field {
 
 /* ── Segmented control (seeker / employer toggle) ───────────────── */
 .seg {
-  display: inline-flex;
+  display: none;
   gap: 3px;
   padding: 4px;
   border-radius: 999px;
